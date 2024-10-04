@@ -1,0 +1,72 @@
+header.title {
+    transform: translateY(-150%);
+    animation: ani 1s forwards;
+}
+
+header.subtitle {
+    transform: translateY(-500%);
+    animation: ani 1s forwards 1s;
+}
+
+header.registration,
+header.authorization {
+    transform: translateY(+1000%);
+    animation: b_authorization 1s forwards 2s;
+}
+
+@keyframes b_authorization {
+    0% {
+        transform: translateY(+800%);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+@keyframes ani {
+    0% {
+        transform: translateY(-400%);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+/*.panel {*/
+/*    background-color: #5f5f5f; !* Цвет фона панели *!*/
+/*    padding: 20px;*/
+/*    border-radius: 8px;*/
+/*    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);*/
+/*    width: 300px; !* Ширина панели *!*/
+/*    text-align: center;*/
+/*}*/
+
+.container {
+    display: flex; /* Используем flexbox для размещения блоков */
+    justify-content: center; /* Центруем по горизонтали */
+    margin-top: 50px; /* Отступ сверху */
+    /*display: flex; !* Используем flexbox для размещения div'ов *!*/
+    /*justify-content: center; !* Центровать по горизонтали *!*/
+    /*align-items: start; !* Центровать по вертикали *!*/
+    /*height: 100vh; !* Заполняет всю высоту экрана *!*/
+    /*margin: 0 10px; !* Отступы между блоками *!*/
+}
+
+#circle {
+    border-radius: 10px;
+    background: #0f3856;
+    padding: 20px;
+    display: grid
+}
+
+div.authorization,
+div.registration {
+    background-color: #7b7b7b; /* Цвет фона для блоков */
+    color: white; /* Цвет текста */
+    padding: 20px;
+    border-radius: 8px;
+    margin: 0 10px; /* Отступы между блоками */
+    text-align: center; /* Центрируем текст */
+    cursor: pointer; /* Указываем, что блоки кликабельные */
+    transition: background-color 0.3s; /* Плавный переход за стили */
+}

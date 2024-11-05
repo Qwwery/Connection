@@ -16,7 +16,7 @@ Connection | Регистрация
         <div id="params" style="color: red"></div>
         <input type="password" placeholder="Пароль" name="password" value="{{ info.password }}" id="password">
         <button value="registration" name="button" type="submit">Создать</button>
-        <div>Нажимая кнопу «Создать», вы соглашаетесь с <b><a href="privacy" class="privacy">Пользовательским
+        <div>Нажимая кнопу «Создать», вы соглашаетесь с <b><a href="user_agreement" class="user_agreement">Пользовательским
             соглашением</a></b> и <b><a href="privacy" class="privacy">политикой конфиденциальности</a></b>.
         </div>
     </div>
@@ -29,7 +29,7 @@ Connection | Регистрация
             event.preventDefault(); // Предотвращаем отправку формы
 
             const email = $('#email').val();
-
+            // TODO
             $.ajax({
                 url: '/check-email',
                 type: 'POST',
@@ -49,9 +49,11 @@ Connection | Регистрация
                                 lastName: $('#lastName').val(),
                                 password: $('#password').val(),
                                 login: $('#login').val()
-                            })
+                            }),
+                            success: function () {
+                                window.location.replace('/feed'); // Перенаправление происходит только после успешной регистрации
+                            }
                         })
-                        window.location.replace('feed')
                     }
                 },
                 error: function (xhr, status, error) {
@@ -60,13 +62,5 @@ Connection | Регистрация
             });
         });
     });
-
-    function validateEmail(event) {
-        const email = document.getElementsByName('email');
-
-        if (!(email.indexOf('@') > email.indexOf('.'))) {
-            // TODO
-        }
-    }
 </script>
 {% endblock %}

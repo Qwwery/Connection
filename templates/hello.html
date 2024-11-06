@@ -1,12 +1,15 @@
-{% extends "base.html" %}
-
-{% block title %}
-Connection | Добро пожаловать!
-{% endblock %}
-
-
-{% block content %}
-<body style="overflow: hidden; margin: 0; font-family: Arial, sans-serif; background-color: #005f8f;">
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style.css')}}"/>
+    <link rel="icon" href="{{url_for('static', filename='image/AC_icon.png')}}">
+    <title>Connection | Добро пожаловать!</title>
+</head>
+<body>
 <header class="title">
     <div><h1 align="center" style="color: aliceblue;">Connection</h1></div>
 </header>
@@ -14,21 +17,59 @@ Connection | Добро пожаловать!
 <header class="subtitle">
     <div><h1 align="center" style="color: aliceblue;">Добро пожаловать!</h1></div>
 </header>
-
 <div class="container">
-    <header class="authorization">
-        <div class="authorization">
-            <div class="panel"><h3 align="center" style="color: aliceblue;">Регистрация</h3></div>
-            <form action="">
-
-            </form>
-        </div>
-    </header>
-    <header class="registration">
-        <div class="registration">
-            <div class="panel"><h3 align="center" style="color: aliceblue;">Авторизация</h3></div>
-        </div>
-    </header>
+    <form method="post" id='registration' name="registration" onsubmit="return validateForm(event)">
+        <header class="registration">
+            <div class="box">
+                <h3>Регистрация</h3>
+                <input type="email" placeholder="Почта" name="email" id="emailRegistration" >
+                <input type="password" placeholder="Пароль" name="password" id="passwordRegistration" >
+                <div id="errorMessageRegistration" style="color: red"></div>
+                <button value="registration" name="button" type="submit">Создать</button>
+            </div>
+        </header>
+    </form>
+    <form method="post" id="authorization" name="authorization">
+        <header class="authorization">
+            <div class="box">
+                <h3>Авторизация</h3>
+                <input type="text" placeholder="Логин" name="login">
+                <input type="password" placeholder="Пароль" name="password">
+                <button value="authorization" name="button" type="submit">Войти</button>
+            </div>
+        </header>
+    </form>
 </div>
 </body>
-{% endblock %}
+</html>
+<script>
+    function validateForm(event) {
+        const inputEmail = document.getElementById('emailRegistration');
+        const inputPassword = document.getElementById('passwordRegistration');
+
+        const errorMessage = document.getElementById('errorMessageRegistration');
+
+        if (inputEmail.value.trim() === "") {
+            event.preventDefault();
+            if (inputPassword.value.trim() === "") {
+                errorMessage.innerText = "*Вы забыли ввести значения!";
+            }
+            else {
+                errorMessage.innerText = "*Вы забыли ввести почту!";
+            }
+            inputEmail.focus()
+            inputEmail.setSelectionRange(inputEmail.value.length, inputEmail.value.length)
+            return false;
+        }
+        if (inputPassword.value.trim() === "") {
+            event.preventDefault();
+            errorMessage.innerText = "*Вы забыли ввести пароль!";
+            inputPassword.focus()
+            inputPassword.setSelectionRange(inputPassword.value.length, inputPassword.value.length)
+            return false;
+        }
+
+        errorMessage.innerText = '';
+        return true;
+    }
+</script>

@@ -2,7 +2,7 @@ from flask import Flask, session, render_template, request, redirect, url_for, s
 from models import db_session
 from models.users import User
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from check_email import is_valid_email as check_email
+from check_email import is_valid_email as check_email_to_correct
 
 app = Flask(__name__)
 app.secret_key = 'DOTA 2'
@@ -68,13 +68,14 @@ def check_email():
     db_sess = db_session.create_session()
     data = request.json
     email = data.get("email")
-    # if not check_email(email):
-    #     return jsonify({'check': ''})
+    is_check_email_to_correct = False
+    if not check_email_to_correct(email):
+        is_check_email_to_correct = True
     exists = db_sess.query(User).filter(User.email == email).first()
     if exists:
-        return jsonify({"exists": True})
+        return jsonify({"error_exists": True, 'errror_check_email_to_correct': is_check_email_to_correct})
     else:
-        return jsonify({"exists": False})
+        return jsonify({"error_exists": False, 'error_check_email_to_correct': is_check_email_to_correct})
 
 
 @app.route('/registration-new-user', methods=['POST'])

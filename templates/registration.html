@@ -11,7 +11,8 @@ Connection | Регистрация
         <h3>Регистрация</h3>
         <input type="text" placeholder="Имя" name="name" id="name">
         <input type="text" placeholder="Фамилия" name="lastName" id="lastName">
-        <input type="text" placeholder="Логин" name="login" id="login">
+        <input type="text" placeholder="Логин" value="{{ info.login }}" name="login" id="login">
+        <div id="check_login" style="color: red"></div>
         <input type="text" placeholder="Почта" name="email" value="{{ info.email }}" id="email">
         <div id="params" style="color: red"></div>
         <input type="password" placeholder="Пароль" name="password" value="{{ info.password }}" id="password">
@@ -23,48 +24,48 @@ Connection | Регистрация
 </form>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
     $(document).ready(function () {
         $('#registration').on('submit', function (event) {
             event.preventDefault(); // Предотвращаем отправку формы
-
             const email = $('#email').val();
             $.ajax({
-                url: '/check-email',
+                url: '/check-all-reg',
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({email: email}),
                 success: function (response) {
+                    $('#params').text("");
+                    $('#check_login').text('')
                     if (response.error_check_email_to_correct) {
                         $('#params').text("Введена некорректная почта");
+                    } else if (response.error_exists) {
+                        $('#params').text("Данная почта уже используется");
+                    } else if (response.error_login) {
+                        $('#check_login').text('Пользователь с данным логином уже существует')
                     } else {
-                        if (response.error_exists) {
-                            $('#params').text("Данная почта уже используется");
-                        } else {
-                            $.ajax({
-                                url: '/registration-new-user',
-                                type: 'POST',
-                                contentType: 'application/json',
-                                data: JSON.stringify({
-                                    name: $('#name').val(),
-                                    email: email,
-                                    lastName: $('#lastName').val(),
-                                    password: $('#password').val(),
-                                    login: $('#login').val()
-                                }),
-                                success: function () {
-                                    $('#params').text("ошибка");
-                                    // window.location.replace('/feed'); // Перенаправление происходит только после успешной регистрации
-                                }
-                            })
-                        }
+
+                        $.ajax({
+                            url: '/registration-new-user',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify({
+                                name: $('#name').val(),
+                                email: email,
+                                lastName: $('#lastName').val(),
+                                password: $('#password').val(),
+                                login: $('#login').val()
+                            }),
+                            success: function () {
+                                window.location.replace('/feed'); // Перенаправление происходит только после успешной регистрации
+                            }
+                        })
                     }
-                },
-                error: function (xhr, status, error) {
-                    $('#params').text("Произошла ошибка: " + error);
                 }
             });
         });
     });
+
 </script>
 {% endblock %}

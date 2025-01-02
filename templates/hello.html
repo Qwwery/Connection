@@ -22,19 +22,20 @@
         <header class="registration">
             <div class="box">
                 <h3>Регистрация</h3>
-                <input type="email" placeholder="Почта" name="email" id="emailRegistration" >
-                <input type="password" placeholder="Пароль" name="password" id="passwordRegistration" >
+                <input type="text" placeholder="Почта" name="email" id="emailRegistration">
+                <input type="password" placeholder="Пароль" name="password" id="passwordRegistration">
                 <div id="errorMessageRegistration" style="color: red"></div>
                 <button value="registration" name="button" type="submit">Создать</button>
             </div>
         </header>
     </form>
-    <form method="post" id="authorization" name="authorization">
+    <form method="post" id="authorization" name="authorization" onsubmit="return validateForm(event)">
         <header class="authorization">
             <div class="box">
                 <h3>Авторизация</h3>
-                <input type="text" placeholder="Логин" name="login">
-                <input type="password" placeholder="Пароль" name="password">
+                <input type="text" placeholder="Логин" name="login" id="emailAuthorization">
+                <input type="password" placeholder="Пароль" name="password" id="passwordAuthorization">
+                <div id="errorMessageAuthorization" style="color: red"></div>
                 <button value="authorization" name="button" type="submit">Войти</button>
             </div>
         </header>
@@ -42,34 +43,46 @@
 </div>
 </body>
 </html>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    function validateForm(event) {
-        const inputEmail = document.getElementById('emailRegistration');
-        const inputPassword = document.getElementById('passwordRegistration');
+    $(document).ready(function () {
+        $('#registration').on('submit', function (event) {
+            event.preventDefault(); // Предотвращаем отправку формы
+            const email = $('#emailRegistration').val();
+            const password = $("#passwordRegistration").val();
+            $.ajax({
+                url: '/check-registration',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({email: email, password: password}),
+                success: function (response) {
+                    $('#errorMessageRegistration').text(response.error);
+                    if (!response.error) {
+                        window.location.replace('/registration');
+                    }
+                }
+            })
+        })
+    })
+    $(document).ready(function () {
+        $('#authorization').on('submit', function (event) {
+            event.preventDefault(); // Предотвращаем отправку формы
+            const email = $('#emailAuthorization').val();
+            const password = $("#passwordAuthorization").val();
+            $.ajax({
+                url: "/check-authorization",
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({email: email, password: password}),
+                success: function (response) {
+                    // alert("проверкаааааааааааа") ого, это подойдет
+                    $('#errorMessageAuthorization').text(response.error);
+                    if (!response.error) {
+                        window.location.replace('/feed');
+                    }
+                }
+            })
+        })
+    })
 
-        const errorMessage = document.getElementById('errorMessageRegistration');
-
-        if (inputEmail.value.trim() === "") {
-            event.preventDefault();
-            if (inputPassword.value.trim() === "") {
-                errorMessage.innerText = "*Вы забыли ввести значения!";
-            }
-            else {
-                errorMessage.innerText = "*Вы забыли ввести почту!";
-            }
-            inputEmail.focus()
-            inputEmail.setSelectionRange(inputEmail.value.length, inputEmail.value.length)
-            return false;
-        }
-        if (inputPassword.value.trim() === "") {
-            event.preventDefault();
-            errorMessage.innerText = "*Вы забыли ввести пароль!";
-            inputPassword.focus()
-            inputPassword.setSelectionRange(inputPassword.value.length, inputPassword.value.length)
-            return false;
-        }
-
-        errorMessage.innerText = '';
-        return true;
-    }
 </script>

@@ -3,6 +3,7 @@ from models import db_session
 from models.users import User
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from check_email import is_valid_email as check_email_to_correct
+from sqlalchemy import or_
 
 app = Flask(__name__)
 app.secret_key = 'DOTA 2'
@@ -21,64 +22,85 @@ def load_user(user_id):
     return db_sess.get(User, user_id)
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=["GET"])
 def start():
     if request.method == 'GET':
         if not current_user.is_authenticated:
             return render_template('hello.html')
         else:
             return redirect(url_for('feed'))
-    elif request.method == 'POST':
-        db_sess = db_session.create_session()
 
-        if request.form.get('button') == 'registration':
-            form_email = request.form.get('email')
-            form_password = request.form.get('password')
-            session['email'] = form_email
-            session['password'] = form_password
 
-            if db_sess.query(User).filter(User.email == form_email).first():
-                return redirect(url_for('authorization'))
+@app.route('/check-registration', methods=["POST"])
+def check_registration():
+    db_sess = db_session.create_session()
+    data = request.json
 
-            return redirect(url_for('registration'))
-        else:
-            form_login = request.form.get('login')
-            form_password = request.form.get('password')
-            session['login'] = form_login
-            session['password'] = form_password
-            return redirect(url_for('authorization'))
+    email = data.get('email')
+    password = data.get('password')
+
+    if db_sess.query(User).filter(User.email == email).first():
+        return jsonify({'error': 'Данная почта уже используется'})
+    if email == '' or password == '':
+        return jsonify({'error': "Проверьте правильность заполнения данных"})
+    if not check_email_to_correct(email):
+        return jsonify({'error': "Почта введена в неправильном формате"})
+    session['email'] = email
+    session['password'] = password
+    return jsonify({'ok': True})
+
+
+@app.route('/check-authorization', methods=['POST'])
+def check_authorization():
+    db_sess = db_session.create_session()
+    data = request.json
+    login = data.get('email')
+    password = data.get('password')
+
+    th_user = db_sess.query(User).filter(
+        or_(User.email == login, User.special_login == login)).first()
+
+    if th_user:
+        if th_user.check_password(password):
+            login_user(th_user, remember=True)
+            return jsonify({'ok': True})
+    return jsonify({'error': "Неверная почта или пароль"})
 
 
 @app.route('/registration', methods=['GET', 'POST'])
 def registration():
-    if session.get('logged_in'):
+    if current_user.is_authenticated:
         return redirect(url_for('feed'))
     if request.method == 'GET':
-        info = {
-            'email': session.get('email'),
-            'password': session.get('password')
-        }
+        try:
+            info = {
+                'login': session.get("login") if session.get("login") else '',
+                'email': session.get('email') if session.get('email') else '',
+                'password': session.get('password') if session.get('password') else ''
+            }
+        except KeyError:
+            info = {}
         return render_template('registration.html', info=info)
-    else:
-        return redirect(url_for('authorization'))
 
 
-@app.route('/check-email', methods=['POST'])
+@app.route('/check-all-reg', methods=['POST'])  # Проверка перед регистрацией нового пользователя
 def check_email():
     db_sess = db_session.create_session()
     data = request.json
     email = data.get("email")
-    is_check_email_to_correct = False
-    if not check_email_to_correct(email):
-        is_check_email_to_correct = True
+    is_check_email_to_correct = not check_email_to_correct(email)
+
     exists = db_sess.query(User).filter(User.email == email).first()
-    if exists:
-        return jsonify({"error_exists": True, 'errror_check_email_to_correct': is_check_email_to_correct})
-    else:
-        return jsonify({"error_exists": False, 'error_check_email_to_correct': is_check_email_to_correct})
+    exists = True if exists else False
+
+    special_login = data.get("special_login")
+    error_login = True if db_sess.query(User).filter(User.special_login == special_login).first() else False
+
+    return jsonify(
+        {"error_exists": exists, 'error_check_email_to_correct': is_check_email_to_correct, 'error_login': error_login})
 
 
-@app.route('/registration-new-user', methods=['POST'])
+@app.route('/registration-new-user', methods=['POST'])  # Если проверка выше прошли, то регистрировать нового пользователя
 def register_new_user():
     db_sess = db_session.create_session()
     data = request.json
@@ -96,13 +118,7 @@ def register_new_user():
     db_sess.commit()
 
     login_user(user_info, remember=True)
-    print(current_user)
     return 'ok'
-
-
-@app.route('/authorization', methods=['GET', 'POST'])
-def authorization():
-    return render_template('authorization.html')
 
 
 @app.route('/privacy', methods=['GET'])

@@ -1,11 +1,16 @@
 from flask import Flask, session, render_template, request, redirect, url_for, sessions, make_response, jsonify
 from models import db_session
 from models.users import User
+from models.avatars import Avatar
+from models.about_users import AboutUser
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+# from flask_cors import CORS
 from check_email import is_valid_email as check_email_to_correct
 from sqlalchemy import or_
+from base64 import b64decode, b64encode
 
 app = Flask(__name__)
+# CORS(app)
 app.secret_key = 'DOTA 2'
 db_session.global_init('db/db.db')
 login_manager = LoginManager()
@@ -31,6 +36,89 @@ def start():
             return redirect(url_for('feed'))
 
 
+@app.route('/home', methods=["GET"])
+def home():
+    if not current_user.is_authenticated:
+        return redirect("/")
+
+    db_sess = db_session.create_session()
+    try:
+        ava = db_sess.query(Avatar).filter_by(user_id=current_user.id).first().image_data
+        ava = str(ava).replace("b'", "").replace("'", "")
+        name = current_user.name
+        last_name = current_user.last_name
+        about = db_sess.query(AboutUser).filter_by(user_id=current_user.id).first()
+        interests = about.interests if about.interests != '-' else ''
+        birthday = about.birthday if about.birthday != '-' else ''
+        city = about.city if about.city != '-' else ''
+        email = current_user.email
+        hide_interests = about.hide_interests
+        hide_birthday = about.hide_birthday
+        hide_city = about.hide_city
+        info = {
+            'name': name,
+            'last_name': last_name,
+            'ava': ava,
+            'birthday': birthday,
+            'city': city,
+            'interests': interests,
+            "email": email,
+            "hide_interests": hide_interests,
+            "hide_birthday": hide_birthday,
+            "hide_city": hide_city,
+        }
+        return render_template("home.html", **info)
+    except Exception as e:
+        print(f"Error: {e}")
+        return redirect("/")
+
+
+@app.route('/prof/<login>', methods=["GET"])
+def user(login):
+    if not current_user.is_authenticated:
+        return redirect('/')
+    if current_user.special_login == login:
+        return redirect('/home')
+    db_sess = db_session.create_session()
+    person = db_sess.query(User).filter(User.special_login == login).first()
+    if person is None:
+        return redirect('/')
+    try:
+        avatar_bytes = db_sess.query(Avatar).filter(Avatar.user_id == person.id).first().image_data
+        avatar_bytes = str(avatar_bytes).replace("b'", "").replace("'", "")
+        info = {
+            'name': person.name,
+            "last_name": person.last_name,
+            "ava": avatar_bytes
+        }
+        return render_template('viewprof.html', **info)
+    except Exception as e:
+        print(f"Error: {e}")
+        return redirect('/')
+
+
+@app.route("/privacy-settings", methods=["POST"])
+def privacy_settings():
+    data = request.json
+    db_sess = db_session.create_session()
+    try:
+        about_user = db_sess.query(AboutUser).filter_by(user_id=current_user.id).first()
+        about_user.interests = data.get('interests', '')
+        about_user.birthday = data.get('birthday', '')
+        about_user.city = data.get('city', '')
+        about_user.hide_interests = data.get('hide_interests', False)
+        about_user.hide_birthday = data.get('hide_birthday', False)
+        about_user.hide_city = data.get('hide_city', False)
+        db_sess.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        print(f"Error: {e}")
+        db_sess.rollback()
+        return jsonify({"status": "error"}), 500
+    finally:
+        db_sess.close()
+
+
 @app.route('/check-registration', methods=["POST"])
 def check_registration():
     db_sess = db_session.create_session()
@@ -47,6 +135,7 @@ def check_registration():
         return jsonify({'error': "Почта введена в неправильном формате"})
     session['email'] = email
     session['password'] = password
+    db_sess.close()
     return jsonify({'ok': True})
 
 
@@ -60,6 +149,7 @@ def check_authorization():
     th_user = db_sess.query(User).filter(
         or_(User.email == login, User.special_login == login)).first()
 
+    db_sess.close()
     if th_user:
         if th_user.check_password(password):
             login_user(th_user, remember=True)
@@ -67,7 +157,7 @@ def check_authorization():
     return jsonify({'error': "Неверная почта или пароль"})
 
 
-@app.route('/registration', methods=['GET', 'POST'])
+@app.route('/registration', methods=['GET'])
 def registration():
     if current_user.is_authenticated:
         return redirect(url_for('feed'))
@@ -95,12 +185,13 @@ def check_email():
 
     special_login = data.get("special_login")
     error_login = True if db_sess.query(User).filter(User.special_login == special_login).first() else False
-
+    db_sess.close()
     return jsonify(
         {"error_exists": exists, 'error_check_email_to_correct': is_check_email_to_correct, 'error_login': error_login})
 
 
-@app.route('/registration-new-user', methods=['POST'])  # Если проверка выше прошли, то регистрировать нового пользователя
+@app.route('/registration-new-user',
+           methods=['POST'])  # Если проверки выше прошли, то регистрировать нового пользователя
 def register_new_user():
     db_sess = db_session.create_session()
     data = request.json
@@ -111,12 +202,23 @@ def register_new_user():
     login = data.get("login")
     user = User(name=name, email=email, last_name=last_name, special_login=login)
     user.set_password(password)
+
     db_sess.add(user)
     db_sess.commit()
 
-    user_info = db_sess.query(User).filter(User.email == email).first()
+    with open('static/image/unnamed.jpg', 'rb') as avatar:
+        ava64 = b64encode(avatar.read())
+
+    avatar = Avatar(image_data=ava64, user_id=user.id)
+
+    about = AboutUser(user_id=user.id, city='-', birthday="-", interests='-')
+
+    db_sess.add(avatar)
+    db_sess.add(about)
     db_sess.commit()
 
+    user_info = db_sess.query(User).filter(User.email == email).first()
+    db_sess.close()
     login_user(user_info, remember=True)
     return 'ok'
 

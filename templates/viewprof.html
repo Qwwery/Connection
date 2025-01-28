@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ name }} {{ last_name }}
+{% endblock %}
+
+
+{% block content %}
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/home.css')}}"/>
+
+<div class="profile-container">
+    <div class="profile-left">
+        <div class="profile-header">
+            <img src="data:image/jpg;base64,{{ ava }}" alt="Фото профиля" class="profile-pic">
+            <h1 class="profile-name">{{ name }} {{ last_name }}</h1>
+            <button class="edit-button">Редактировать профиль</button>
+        </div>
+    </div>
+
+    <div class="profile-right">
+        <div class="profile-info">
+            <h2>Информация о пользователе</h2>
+            <ul>
+                <li><strong>Email:</strong> user@example.com</li>
+                <li><strong>Дата рождения:</strong> 1 Января 2000</li>
+                <li><strong>Город:</strong> Москва</li>
+                <li><strong>Интересы:</strong> Программирование, Музыка, Спорт</li>
+            </ul>
+        </div>
+
+        <div class="profile-posts">
+            <h2>Недавние публикации</h2>
+            <div class="post">
+                <h3>Заголовок публикации</h3>
+                <p>Текст публикации...</p>
+                <span class="post-date">1 Января 2025</span>
+            </div>
+            <div class="post">
+                <h3>Другой заголовок</h3>
+                <p>Другой текст публикации...</p>
+                <span class="post-date">31 Декабря 2024</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

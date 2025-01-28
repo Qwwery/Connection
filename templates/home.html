@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}
+{{ name }} {{ last_name }}
+{% endblock %}
+{% block content %}
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/home.css')}}"/>
+<div class="profile-container">
+    <div class="profile-left">
+        <img src="data:image/jpg;base64,{{ ava }}" alt="Profile Picture" class="profile-pic">
+        <h2 class="profile-name">{{ name }} {{ last_name }}</h2>
+        <button id="editButton" class="edit-button">Редактировать профиль</button>
+    </div>
+    <div class="profile-right">
+        <section class="profile-header">
+            <h2>Информация о пользователе</h2>
+        </section>
+        <section class="profile-info">
+            <ul>
+                <li><strong>Почта:</strong> {{ email }} (скрыто для других)</li>
+                <li><strong>Интересы:</strong> <span id="interests_info">{% if not hide_interests %}{{ interests }}{% else %}Скрыто{% endif %}</span></li>
+                <li><strong>Дата рождения:</strong> <span id="birthday_info">{% if not hide_birthday %}{{ birthday }}{% else %}Скрыто{% endif %}</span></li>
+                <li><strong>Город:</strong> <span id="city_info">{% if not hide_city %}{{ city }}{% else %}Скрыто{% endif %}</span></li>
+            </ul>
+        </section>
+        <section class="profile-posts">
+            <h2>Недавние публикации</h2>
+            <div class="post">
+                <h3>Заголовок публикации</h3>
+                <p>Текст публикации...</p>
+                <span class="post-date">1 Января 2025</span>
+            </div>
+            <div class="post">
+                <h3>Другой заголовок</h3>
+                <p>Другой текст публикации...</p>
+                <span class="post-date">31 Декабря 2024</span>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Модальное окно -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span id="close" class="close">&times;</span>
+        <form id="settings-form">
+            <h2>Редактирование профиля</h2>
+            <div class="form-group">
+                <label for="interests">Интересы:</label>
+                <div class="input-with-buttons">
+                    <input type="text" id="interests" name="interests" value="{{ interests }}" style="display: {% if hide_interests %}none{% endif %};" class="form-input">
+                    <div class="toggle-buttons">
+                        <button id="showInt" class="toggle-button" style="display: {% if not hide_interests %}none{% endif %};">Показывать</button>
+                        <button id="hideInt" class="toggle-button" style="display: {% if hide_interests %}none{% endif %};">Скрывать</button>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <br>
+                <label for="birthday">Дата рождения:</label>
+                <div class="input-with-buttons">
+                    <input type="date" id="birthday" name="birthday" value="{{ birthday }}" style="display: {% if hide_birthday %}none{% endif %};"  class="form-input">
+                    <div class="toggle-buttons">
+                        <button id="showBir" class="toggle-button" style="display: {% if not hide_birthday %}none{% endif %};">Показывать</button>
+                        <button id="hideBir" class="toggle-button" style="display: {% if hide_birthday %}none{% endif %};">Скрывать</button>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <br>
+                <label for="city">Город:</label>
+                <div class="input-with-buttons">
+                    <input type="text" id="city" name="city" value="{{ city }}" style="display: {% if hide_city %}none{% endif %};"  class="form-input">
+                    <div class="toggle-buttons">
+                        <button id="showCit" class="toggle-button" style="display: {% if not hide_city %}none{% endif %};">Показывать</button>
+                        <button id="hideCit" class="toggle-button" style="display: {% if hide_city %}none{% endif %};">Скрывать</button>
+                    </div>
+                </div>
+            </div>
+            <br>
+            <button type="submit" class="save-button">Сохранить изменения</button>
+        </form>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        var modal = $('#editModal');
+        var btn = $('#editButton');
+        var span = $('#close');
+
+        // Открываем модальное окно
+        btn.click(function () {
+            modal.show();
+        });
+
+        // Закрываем модальное окно
+        span.click(function () {
+            modal.hide();
+        });
+
+        // При клике вне модального окна
+        $(window).on('mousedown', function (event) {
+            if ($(event.target).is(modal)) {
+                modal.hide();
+            }
+        });
+
+        // Обработка пунктов скрытия/показа
+        $('#showInt').click(function (e) {
+            e.preventDefault();
+            $('#interests').show();
+            $(this).hide();
+            $('#hideInt').show();
+        });
+        $('#hideInt').click(function (e) {
+            e.preventDefault();
+            $('#interests').hide();
+            $(this).hide();
+            $('#showInt').show();
+        });
+        $('#showBir').click(function (e) {
+            e.preventDefault();
+            $('#birthday').show();
+            $(this).hide();
+            $('#hideBir').show();
+        });
+        $('#hideBir').click(function (e) {
+            e.preventDefault();
+            $('#birthday').hide();
+            $(this).hide();
+            $('#showBir').show();
+        });
+        $('#showCit').click(function (e) {
+            e.preventDefault();
+            $('#city').show();
+            $(this).hide();
+            $('#hideCit').show();
+        });
+        $('#hideCit').click(function (e) {
+            e.preventDefault();
+            $('#city').hide();
+            $(this).hide();
+            $('#showCit').show();
+        });
+
+        // Отправка формы
+        $('#settings-form').submit(function (event) {
+            event.preventDefault();
+            // Собираем данные для отправки
+            var formData = {
+                interests: $('#interests').val(),
+                birthday: $('#birthday').val(),
+                city: $('#city').val(),
+                hide_interests: $('#interests').is(':hidden'),
+                hide_birthday: $('#birthday').is(':hidden'),
+                hide_city: $('#city').is(':hidden')
+            };
+            $.ajax({
+                url: '/privacy-settings',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function () {
+                    if (!formData.hide_interests) {
+                        $("#interests_info").text(formData.interests);
+                    } else {
+                        $("#interests_info").text("Скрыто");
+                    }
+                    if (!formData.hide_birthday) {
+                        $("#birthday_info").text(formData.birthday);
+                    } else {
+                        $("#birthday_info").text("Скрыто");
+                    }
+                    if (!formData.hide_city) {
+                        $("#city_info").text(formData.city);
+                    } else {
+                        $("#city_info").text("Скрыто");
+                    }
+                },
+                error: function () {
+                    alert("Ошибка при сохранении настроек.");
+                }
+            });
+            modal.hide();
+        });
+    });
+</script>
+{% endblock %}

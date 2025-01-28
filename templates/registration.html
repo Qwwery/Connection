@@ -30,11 +30,12 @@ Connection | Регистрация
         $('#registration').on('submit', function (event) {
             event.preventDefault(); // Предотвращаем отправку формы
             const email = $('#email').val();
+            const login = $('#login').val();
             $.ajax({
                 url: '/check-all-reg',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({email: email}),
+                data: JSON.stringify({email: email, special_login: login}),
                 success: function (response) {
                     $('#params').text("");
                     $('#check_login').text('')
@@ -43,7 +44,7 @@ Connection | Регистрация
                     } else if (response.error_exists) {
                         $('#params').text("Данная почта уже используется");
                     } else if (response.error_login) {
-                        $('#check_login').text('Пользователь с данным логином уже существует')
+                        $('#check_login').text('Пользователь с таким логином уже существует.')
                     } else {
 
                         $.ajax({

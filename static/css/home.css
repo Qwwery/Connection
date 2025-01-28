@@ -1,0 +1,209 @@
+* {
+    box-sizing: border-box; /* Учитываем границы и отступы */
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #007bff; /* Более светлый фон */
+    color: #333;
+}
+
+.profile-container {
+    display: flex; /* Используем Flexbox для размещения */
+    background: white;
+    max-width: 1200px;
+    margin: 20px auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.profile-left {
+    padding: 20px;
+    border-right: 1px solid #ddd; /* Разделительная линия */
+    text-align: center; /* Центрируем текст */
+    width: 250px; /* Фиксированная ширина для левой панели */
+}
+
+.profile-right {
+    padding: 20px;
+    flex: 1; /* Занимает оставшееся пространство */
+}
+
+.profile-header {
+    margin-bottom: 20px;
+}
+
+h2 {
+    color: #333333;
+}
+
+.profile-pic {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #007bff;
+}
+
+.profile-name {
+    margin: 10px 0;
+    font-size: 24px;
+    color: #333;
+}
+
+.edit-button {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.edit-button:hover {
+    background-color: #0056b3;
+}
+
+.profile-info,
+.profile-posts {
+    margin-top: 20px; /* Отступ сверху для секций информации */
+}
+
+.profile-info h2,
+.profile-posts h2 {
+    margin-top: 0; /* Убираем отступ сверху */
+}
+
+.profile-info ul {
+    list-style: none;
+    padding: 0;
+}
+
+.profile-info ul li {
+    margin: 8px 0;
+    font-size: 16px;
+}
+
+.profile-posts {
+    border-top: 1px solid #ddd; /* Разделительная линия перед публикациями */
+    padding-top: 20px; /* Отступ сверху для публикаций */
+}
+
+.post {
+    background: #f9f9f9;
+    padding: 15px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    transition: box-shadow 0.3s;
+}
+
+.post:hover {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.post h3 {
+    margin: 0;
+}
+
+.post-date {
+    font-size: 14px;
+    color: #777;
+}
+
+.modal {
+    display: none; /* Скрыто по умолчанию */
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 40%;
+    border-radius: 10px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.input-with-buttons {
+    display: flex;
+    align-items: center;
+}
+
+.form-input {
+    flex: 1;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.toggle-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.toggle-button {
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.toggle-button:hover {
+    background-color: #0056b3;
+}
+
+.save-button {
+    display: block;
+    margin-top: 20px;
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.save-button:hover {
+    background-color: #0056b3;
+}

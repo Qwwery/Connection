@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}
+Друзья
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/home.css') }}" /> <!-- TODO -->
+<div class="profile-container">
+    {% if error %}
+    <h2>Упс, произошла какая-то ошибка!</h2>
+    {% endif %}
+    {% if friends %}
+        {% for friend in friends %}
+            <a href="prof/{{ friend.friend_id }}">{{ friend.name_friends }}</a><br>
+        {% endfor %}
+    {% else %}
+        <p>У вас пока нет друзей.</p>
+    {% endif %}
+</div>
+{% endblock %}

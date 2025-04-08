@@ -2,6 +2,7 @@ from flask import Flask, session, render_template, request, redirect, url_for, s
 from models import db_session
 from models.users import User
 from models.avatars import Avatar
+from models.friends import Friend
 from models.about_users import AboutUser
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 # from flask_cors import CORS
@@ -22,12 +23,12 @@ def main():
 
 
 @login_manager.user_loader
-def load_user(user_id):
+def load_user(user_id):  # ХЗ, какая-то инициализация бд, видимо
     db_sess = db_session.create_session()
     return db_sess.get(User, user_id)
 
 
-@app.route('/', methods=["GET"])
+@app.route('/', methods=["GET"])  # Если авторизован, то переносить на страницу новостей, иначе - нет.
 def start():
     if request.method == 'GET':
         if not current_user.is_authenticated:
@@ -36,7 +37,7 @@ def start():
             return redirect(url_for('feed'))
 
 
-@app.route('/home', methods=["GET"])
+@app.route('/home', methods=["GET"])  # Твой профиль
 def home():
     if not current_user.is_authenticated:
         return redirect("/")
@@ -73,14 +74,14 @@ def home():
         return redirect("/")
 
 
-@app.route('/prof/<login>', methods=["GET"])
+@app.route('/prof/<login>', methods=["GET"])  # Профиль другого пользователя
 def user(login):
     if not current_user.is_authenticated:
         return redirect('/')
-    if current_user.special_login == login:
-        return redirect('/home')
     db_sess = db_session.create_session()
-    person = db_sess.query(User).filter(User.special_login == login).first()
+    person = db_sess.query(User).filter(or_(User.special_login == login, User.id == login)).first()
+    if person.special_login == current_user.special_login:
+        return redirect('/home')
     if person is None:
         return redirect('/')
     try:
@@ -97,7 +98,7 @@ def user(login):
         return redirect('/')
 
 
-@app.route("/privacy-settings", methods=["POST"])
+@app.route("/privacy-settings", methods=["POST"])  # Это каждый отдельный пользователь можут поставить отображение своих данных
 def privacy_settings():
     data = request.json
     db_sess = db_session.create_session()
@@ -119,7 +120,7 @@ def privacy_settings():
         db_sess.close()
 
 
-@app.route('/check-registration', methods=["POST"])
+@app.route('/check-registration', methods=["POST"])  # Проверка регистрации (для того, чтобы страница не обновлялась при запросе на регистрацию
 def check_registration():
     db_sess = db_session.create_session()
     data = request.json
@@ -139,7 +140,7 @@ def check_registration():
     return jsonify({'ok': True})
 
 
-@app.route('/check-authorization', methods=['POST'])
+@app.route('/check-authorization', methods=['POST'])  # Проверка для авторизации (сделал для того, чтобы не делать еще 1 страницу
 def check_authorization():
     db_sess = db_session.create_session()
     data = request.json
@@ -157,7 +158,7 @@ def check_authorization():
     return jsonify({'error': "Неверная почта или пароль"})
 
 
-@app.route('/registration', methods=['GET'])
+@app.route('/registration', methods=['GET'])  # хз, какая-то регистрация
 def registration():
     if current_user.is_authenticated:
         return redirect(url_for('feed'))
@@ -223,7 +224,7 @@ def register_new_user():
     return 'ok'
 
 
-@app.route('/privacy', methods=['GET'])
+@app.route('/privacy', methods=['GET']) #  Политика конфеденциальности (хз как это пишется)
 def privacy():
     with open('static/text/privacy.txt', 'r', encoding='utf-8') as f:
         privacy_text = f.read()
@@ -233,7 +234,7 @@ def privacy():
     return render_template('privacy.html', **info)
 
 
-@app.route('/user_agreement', methods=['GET'])
+@app.route('/user_agreement', methods=['GET']) # Пользовательское соглашение
 def user_agreement():
     with open('static/text/user_agreement.txt', 'r', encoding='utf-8') as f:
         user_agreement_text = f.read()
@@ -243,10 +244,31 @@ def user_agreement():
     return render_template('user_agreement.html', **info)
 
 
-@app.route('/feed', methods=['GET', 'POST'])
+@app.route('/feed', methods=['GET', 'POST']) #  Главная (после регистрации)
 @login_required
 def feed():
     return render_template('feed.html')
+
+@app.route("/friends", methods=["GET"])
+@login_required
+def friends():  # Все твои друзья
+    db_sess = db_session.create_session()
+    try:
+        user = current_user.id
+        friends = db_sess.query(Friend).filter(Friend.user_id == user)
+        for i in friends:
+            print(i)
+        info = {
+            "friends": friends,
+            "error": False
+        }
+        return render_template("friends.html", **info)
+    except Exception:
+        info = {
+            "friends": [],
+            "error": True
+        }
+        return render_template("friends.html", )
 
 
 if __name__ == '__main__':

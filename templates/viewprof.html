@@ -9,13 +9,15 @@
 <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/home.css')}}"/>
 
 <div class="profile-container">
-    <div class="profile-left">
-        <div class="profile-header">
-            <img src="data:image/jpg;base64,{{ ava }}" alt="Фото профиля" class="profile-pic">
-            <h1 class="profile-name">{{ name }} {{ last_name }}</h1>
-            <button class="edit-button">Редактировать профиль</button>
+    <from id="AddF">
+        <div class="profile-left">
+            <div class="profile-header">
+                <img src="data:image/jpg;base64,{{ ava }}" alt="Фото профиля" class="profile-pic">
+                <h1 class="profile-name">{{ name }} {{ last_name }}</h1>
+                <button class="edit-button" type="submit">Отправить заявку</button> <!--TODO-->
+            </div>
         </div>
-    </div>
+    </from>
 
     <div class="profile-right">
         <div class="profile-info">
@@ -44,3 +46,14 @@
     </div>
 </div>
 {% endblock %}
+<script>
+    $(document).ready(function () {
+       $('#AddF').on('submit', function (event) {
+            event.preventDefault();
+            var FInfo = {
+
+            }
+        })
+    })
+
+</script>

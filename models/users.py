@@ -19,6 +19,13 @@ class User(SqlAlchemyBase, UserMixin):
     avatar = relationship("Avatar", back_populates="user", uselist=False)
     about = relationship("AboutUser", back_populates="user", uselist=False)
 
+    # Явно указываем foreign_keys для связи friends
+    friends = relationship(
+        "Friend",
+        back_populates="user",
+        foreign_keys="[Friend.user_id]"  # Указываем, что связь происходит через user_id
+    )
+
     def __repr__(self):
         return f'<User> id:{self.id} name:{self.name} login:{self.special_login} email:{self.email}'
 

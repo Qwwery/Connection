@@ -6,4 +6,9 @@
 
 
 {% block content %}
+
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/home.css')}}"/> <!-- TODO -->
+<div class="profile-container">
+    <a href="/friends" type="button">Друзья</a>
+</div>
 {% endblock %}

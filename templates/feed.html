@@ -7,8 +7,17 @@
 
 {% block content %}
 
-<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/home.css')}}"/> <!-- TODO -->
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/home.css')}}"/>
+<div class="profile-container">
+    <a href="/messages" type="button">Мессенджер</a>
+</div>
 <div class="profile-container">
     <a href="/friends" type="button">Друзья</a>
+</div>
+<div class="profile-container">
+    <a href="/requests" type="button">Заявки в друзья</a>
+</div>
+<div class="profile-container">
+    <a href="/search" type="button">Поиск людей</a>
 </div>
 {% endblock %}

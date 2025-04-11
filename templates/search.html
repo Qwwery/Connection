@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}
+Поиск людей
+{% endblock %}
+
+{% block content %}
+<h1>Поиск людей</h1>
+
+<form id="searchForm">
+    <input type="text" id="searchQuery" placeholder="Введите имя или фамилию">
+    <button type="submit">Найти</button>
+</form>
+
+<div id="searchResults"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#searchForm').on('submit', function (event) {
+            event.preventDefault();
+
+            const query = $('#searchQuery').val();
+
+            $.ajax({
+                url: '/search',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ query: query }),
+                success: function (response) {
+                    const resultsDiv = $('#searchResults');
+                    resultsDiv.empty();
+
+                    if (response.success && response.users.length > 0) {
+                        response.users.forEach(user => {
+                            resultsDiv.append(`
+                                <div class="user">
+                                    <span>${user.name} ${user.last_name}</span>
+                                    <button class="add-friend-btn" data-id="${user.id}">Добавить в друзья</button>
+                                </div>
+                            `);
+                        });
+                    } else {
+                        resultsDiv.append('<p>Пользователи не найдены.</p>');
+                    }
+                },
+                error: function () {
+                    alert("Произошла ошибка при поиске.");
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

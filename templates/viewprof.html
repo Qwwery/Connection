@@ -4,20 +4,21 @@
 {{ name }} {{ last_name }}
 {% endblock %}
 
-
 {% block content %}
-<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/home.css')}}"/>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/home.css') }}"/>
 
 <div class="profile-container">
-    <from id="AddF">
+    <form id="AddF" onsubmit="">
         <div class="profile-left">
             <div class="profile-header">
                 <img src="data:image/jpg;base64,{{ ava }}" alt="Фото профиля" class="profile-pic">
                 <h1 class="profile-name">{{ name }} {{ last_name }}</h1>
-                <button class="edit-button" type="submit">Отправить заявку</button> <!--TODO-->
+                <div id="friendRequestButtonContainer">
+                    <!-- Кнопка будет добавляться динамически -->
+                </div>
             </div>
         </div>
-    </from>
+    </form>
 
     <div class="profile-right">
         <div class="profile-info">
@@ -45,15 +46,125 @@
         </div>
     </div>
 </div>
-{% endblock %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function () {
-       $('#AddF').on('submit', function (event) {
-            event.preventDefault();
-            var FInfo = {
+$(document).ready(function () {
+    let userId = "{{ user_id }}"; // ID пользователя, чей профиль открыт
+    let currentCheckStatus = {{ check }}; // Текущий статус дружбы (-1, 0, 1 или 2)
+    console.log("Check status:", {{ check }});
+    // Функция для обновления кнопки
+    function updateFriendRequestButton(checkStatus) {
+        const buttonContainer = $('#friendRequestButtonContainer');
+        buttonContainer.empty(); // Очищаем контейнер
 
+        if (checkStatus === -1) {
+            // Состояние: не друзья, можно отправить заявку
+            buttonContainer.append(
+                `<button class="edit-button" type="button" id="sendFriendRequest">Отправить заявку</button>`
+            );
+            $('#sendFriendRequest').on('click', handleSendFriendRequest);
+        } else if (checkStatus === 0) {
+            // Состояние: заявка отправлена, можно отменить
+            buttonContainer.append(
+                `<button class="edit-button" type="button" id="resendFriendRequest">Отменить заявку</button>`
+            );
+            $('#resendFriendRequest').on('click', handleCancelFriendRequest);
+        } else if (checkStatus === 1) {
+            // Состояние: уже друзья, можно перейти к личным сообщениям
+            buttonContainer.append(
+                `<button class="edit-button" type="button" id="goFriendMessage">Перейти к личным сообщениям</button>`
+            );
+            $('#goFriendMessage').on('click', handleGoToMessages);
+        } else if (checkStatus === 2) {
+            // Состояние: получена заявка, можно принять
+            buttonContainer.append(
+                `<button class="edit-button" type="button" id="acceptFriendRequest">Принять заявку</button>`
+            );
+            $('#acceptFriendRequest').on('click', handleAcceptFriendRequest);
+        }
+    }
+
+    // Обработчик для отправки заявки
+    function handleSendFriendRequest(event) {
+        event.preventDefault();
+
+        $.ajax({
+            url: '/send-friend-request',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ friend_id: userId }),
+            success: function (response) {
+                if (response.success) {
+                    alert("Заявка в друзья отправлена!");
+                    currentCheckStatus = 0; // Меняем статус на "заявка отправлена"
+                    updateFriendRequestButton(currentCheckStatus); // Обновляем кнопку
+                } else {
+                    alert("Ошибка: " + response.message);
+                }
+            },
+            error: function () {
+                alert("Произошла ошибка при отправке запроса.");
             }
-        })
-    })
+        });
+    }
 
+    // Обработчик для отмены заявки
+    function handleCancelFriendRequest(event) {
+        event.preventDefault();
+
+        $.ajax({
+            url: '/cancel-friend-request',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ friend_id: userId }),
+            success: function (response) {
+                if (response.success) {
+                    alert("Заявка успешно отменена!");
+                    currentCheckStatus = -1; // Меняем статус на "не друзья"
+                    updateFriendRequestButton(currentCheckStatus); // Обновляем кнопку
+                } else {
+                    alert("Ошибка: " + response.message);
+                }
+            },
+            error: function () {
+                alert("Произошла ошибка при отмене заявки.");
+            }
+        });
+    }
+
+    // Обработчик для принятия заявки
+    function handleAcceptFriendRequest(event) {
+        event.preventDefault();
+
+        $.ajax({
+            url: '/accept-friend-request',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ friend_id: userId }),
+            success: function (response) {
+                if (response.success) {
+                    alert("Заявка успешно принята!");
+                    currentCheckStatus = 1; // Меняем статус на "уже друзья"
+                    updateFriendRequestButton(currentCheckStatus); // Обновляем кнопку
+                } else {
+                    alert("Ошибка: " + response.message);
+                }
+            },
+            error: function () {
+                alert("Произошла ошибка при принятии заявки.");
+            }
+        });
+    }
+
+    // Обработчик для перехода к личным сообщениям
+    function handleGoToMessages(event) {
+        event.preventDefault();
+        window.location.href = `/messages/${userId}`;
+    }
+
+    // Инициализация кнопки при загрузке страницы
+    updateFriendRequestButton(currentCheckStatus);
+});
 </script>
+{% endblock %}

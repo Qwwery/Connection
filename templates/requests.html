@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}
+Заявки в друзья
+{% endblock %}
+
+{% block content %}
+<h1>Заявки в друзья</h1>
+
+{% if incoming_requests %}
+    <ul>
+        {% for request in incoming_requests %}
+            <li>
+                {{ request.sender_name }}
+                <button class="accept-btn" data-id="{{ request.id }}">Принять</button>
+                <button class="reject-btn" data-id="{{ request.id }}">Отклонить</button>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Нет входящих заявок.</p>
+{% endif %}
+{% endblock %}

@@ -13,7 +13,8 @@ class Friend(SqlAlchemyBase, UserMixin):
     name_friends = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)  # Переименовано из user
     friend_id = Column(Integer, ForeignKey('users.id'), nullable=False)  # Добавлен внешний ключ
-
+    stat = Column(Integer, nullable=False)  #    -1      \     0      \   1   \       2
+                                           #  не друзья \ в ожидании \ друзья \ заявка в друзья
     # Отношение к пользователю (основной пользователь)
     user = relationship(
         "User",

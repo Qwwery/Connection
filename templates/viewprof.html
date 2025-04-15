@@ -21,18 +21,21 @@
     </form>
 
     <div class="profile-right">
-        <div class="profile-info">
+        <section class="profile-header">
             <h2>Информация о пользователе</h2>
+        </section>
+        <section class="profile-info">
             <ul>
-                <li><strong>Email:</strong> user@example.com</li>
-                <li><strong>Дата рождения:</strong> 1 Января 2000</li>
-                <li><strong>Город:</strong> Москва</li>
-                <li><strong>Интересы:</strong> Программирование, Музыка, Спорт</li>
+                <li><strong>Интересы:</strong> <span id="interests_info">{% if not hide_interests %}{{ interests }}{% else %}Пользователь скрыл данные{% endif %}</span></li>
+                <li><strong>Дата рождения:</strong> <span id="birthday_info">{% if not hide_birthday %}{{ birthday }}{% else %}Пользователь скрыл данные{% endif %}</span></li>
+                <li><strong>Город:</strong> <span id="city_info">{% if not hide_city %}{{ city }}{% else %}Пользователь скрыл данные{% endif %}</span></li>
             </ul>
-        </div>
-
-        <div class="profile-posts">
-            <h2>Недавние публикации</h2>
+        </section>
+        <section class="profile-posts">
+            <div class="posts-header">
+                <h2>Недавние публикации</h2>
+                <button id="addPostButton" class="add-post-button">+</button> <!-- хуйняяяяяяяяя -->
+            </div>
             <div class="post">
                 <h3>Заголовок публикации</h3>
                 <p>Текст публикации...</p>
@@ -46,6 +49,72 @@
         </div>
     </div>
 </div>
+
+
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <span id="addClose" class="close">&times;</span>
+        <form id="addNewsForm">
+            <h2>Добавление новости</h2>
+            <div class="form-group">
+                <label for="title">Заголовок новости</label>
+                <div class="input-with-buttons">
+                    <input type="text" id="title" name="title" class="form-input" placeholder="Введите заголовок">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="textNews">Текст новости</label>
+                <div class="input-with-buttons">
+                    <textarea id="textNews" name="textNews" class="form-input form-textarea" placeholder="Введите текст" maxlength="512"></textarea>
+                </div>
+            </div>
+            <button type="submit" class="save-button">Добавить новость</button>
+        </form>
+    </div>
+</div>
+
+
+<!-- Модальное окно -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span id="close" class="close">&times;</span>
+        <form id="settings-form">
+            <h2>Редактирование профиля</h2>
+            <div class="form-group">
+                <label for="interests">Интересы:</label>
+                <div class="input-with-buttons">
+                    <input type="text" id="interests" name="interests" value="{{ interests }}" class="form-input">
+                    <div class="toggle-buttons">
+                        <button id="showInt" class="toggle-button" style="display: {% if not hide_interests %}none{% endif %};">Показывать</button>
+                        <button id="hideInt" class="toggle-button" style="display: {% if hide_interests %}none{% endif %};">Скрывать</button>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="birthday">Дата рождения:</label>
+                <div class="input-with-buttons">
+                    <input type="text" id="birthday" name="birthday" value="{{ birthday }}" class="form-input">
+                    <div class="toggle-buttons">
+                        <button id="showBir" class="toggle-button" style="display: {% if not hide_birthday %}none{% endif %};">Показывать</button>
+                        <button id="hideBir" class="toggle-button" style="display: {% if hide_birthday %}none{% endif %};">Скрывать</button>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="city">Город:</label>
+                <div class="input-with-buttons">
+                    <input type="text" id="city" name="city" value="{{ city }}" class="form-input">
+                    <div class="toggle-buttons">
+                        <button id="showCit" class="toggle-button" style="display: {% if not hide_city %}none{% endif %};">Показывать</button>
+                        <button id="hideCit" class="toggle-button" style="display: {% if hide_city %}none{% endif %};">Скрывать</button>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="save-button">Сохранить изменения</button>
+        </form>
+    </div>
+</div>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -165,6 +234,125 @@ $(document).ready(function () {
 
     // Инициализация кнопки при загрузке страницы
     updateFriendRequestButton(currentCheckStatus);
+
+
+        // инициализация переменных
+        var addNews = $('#addPostButton');
+        var addModal = $('#addModal');
+        var addClose = $('#addClose');
+
+        var modal = $('#editModal');
+        var btn = $('#editButton');
+        var span = $('#close');
+
+
+        // открытие\закрытие окна добавления новостей
+        addNews.click(function () {
+            addModal.show();
+        })
+
+        addClose.click(function () {
+            addModal.hide();
+        })
+
+
+        // Открываем\закрываем модальное окно настроек
+        btn.click(function () {
+            modal.show();
+        });
+        span.click(function () {
+            modal.hide();
+        });
+
+        // При клике вне модального окна
+        $(window).on('mousedown', function (event) {
+            if ($(event.target).is(modal)) {
+                modal.hide();
+            }
+
+            if ($(event.target).is(addModal)) {
+                addModal.hide();
+            }
+        });
+
+        // Обработка пунктов скрытия/показа
+        $('#showInt').click(function (e) {
+            e.preventDefault();
+            $('#interests').show();
+            $(this).hide();
+            $('#hideInt').show();
+        });
+        $('#hideInt').click(function (e) {
+            e.preventDefault();
+            $('#interests').hide();
+            $(this).hide();
+            $('#showInt').show();
+        });
+        $('#showBir').click(function (e) {
+            e.preventDefault();
+            $('#birthday').show();
+            $(this).hide();
+            $('#hideBir').show();
+        });
+        $('#hideBir').click(function (e) {
+            e.preventDefault();
+            $('#birthday').hide();
+            $(this).hide();
+            $('#showBir').show();
+        });
+        $('#showCit').click(function (e) {
+            e.preventDefault();
+            $('#city').show();
+            $(this).hide();
+            $('#hideCit').show();
+        });
+        $('#hideCit').click(function (e) {
+            e.preventDefault();
+            $('#city').hide();
+            $(this).hide();
+            $('#showCit').show();
+        });
+
+        // Отправка формы настроек
+        $('#settings-form').submit(function (event) {
+            event.preventDefault();
+            // Собираем данные для отправки
+            var formData = {
+                interests: $('#interests').val(),
+                birthday: $('#birthday').val(),
+                city: $('#city').val(),
+                hide_interests: $('#interests').is(':hidden'),
+                hide_birthday: $('#birthday').is(':hidden'),
+                hide_city: $('#city').is(':hidden')
+            };
+            $.ajax({
+                url: '/privacy-settings',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function () {
+                    if (!formData.hide_interests) {
+                        $("#interests_info").text(formData.interests);
+                    } else {
+                        $("#interests_info").text("Скрыто");
+                    }
+                    if (!formData.hide_birthday) {
+                        $("#birthday_info").text(formData.birthday);
+                    } else {
+                        $("#birthday_info").text("Скрыто");
+                    }
+                    if (!formData.hide_city) {
+                        $("#city_info").text(formData.city);
+                    } else {
+                        $("#city_info").text("Скрыто");
+                    }
+                },
+                error: function () {
+                    alert("Ошибка при сохранении настроек.");
+                }
+            });
+            modal.hide();
+        });
 });
 </script>
 {% endblock %}

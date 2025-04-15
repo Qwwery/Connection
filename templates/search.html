@@ -36,12 +36,13 @@
                             resultsDiv.append(`
                                 <div class="user">
                                     <span>${user.name} ${user.last_name}</span>
+                                    <a href="prof/${ user.special_login }">Просмотреть профиль</a>
                                     <button class="add-friend-btn" data-id="${user.id}">Добавить в друзья</button>
                                 </div>
                             `);
                         });
                     } else {
-                        resultsDiv.append('<p>Пользователи не найдены.</p>');
+                        resultsDiv.append('<p>Ничего не найдено.</p>');
                     }
                 },
                 error: function () {

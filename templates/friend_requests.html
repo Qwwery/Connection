@@ -12,6 +12,7 @@
         {% for request in incoming_requests %}
             <li>
                 {{ request.sender_name }}
+                <a href="prof/{{ request.special_login }}">Просмотреть профиль</a>
                 <button class="accept-btn" data-id="{{ request.id }}">Принять</button>
                 <button class="reject-btn" data-id="{{ request.id }}">Отклонить</button>
             </li>

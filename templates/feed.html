@@ -4,20 +4,25 @@
 Новости
 {% endblock %}
 
-
 {% block content %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/home.css') }}" />
 
-<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/home.css')}}"/>
-<div class="profile-container">
-    <a href="/messages" type="button">Мессенджер</a>
-</div>
-<div class="profile-container">
-    <a href="/friends" type="button">Друзья</a>
-</div>
-<div class="profile-container">
-    <a href="/requests" type="button">Заявки в друзья</a>
-</div>
-<div class="profile-container">
-    <a href="/search" type="button">Поиск людей</a>
+<div class="news-container">
+    <h1 class="news-title">Новости</h1>
+
+    {% if news_list %}
+        {% for news in news_list %}
+            <div class="post" data-id="{{ news.id }}">
+                <h3 class="post-title">{{ news.title }}</h3>
+                <p class="post-content">{{ news.content }}</p>
+                {% if news.image %}
+                    <img src="{{ news.image }}" alt="Изображение новости" class="post-image">
+                {% endif %}
+                <span class="post-date">{{ news.created_at }}</span>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p id="netnowostey" class="no-news-message">Нет новостей.</p>
+    {% endif %}
 </div>
 {% endblock %}

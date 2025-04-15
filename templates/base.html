@@ -1,16 +1,42 @@
 <!doctype html>
 <html lang="ru">
 <head>
+    <!doctype html>
+    <html lang="ru">
+    <head>
+        <aside class="left-panel">
+            <div class="logo">
+                <a href="/" class="logo_a">Connection</a>
+            </div>
+            <nav class="main-nav">
+                <ul class="main_nav_ul">
+                    <li><a href="/feed">Главная</a></li>
+                    <li><a href="/home">Профиль</a></li>
+                    <li><a href="/messages">Сообщения</a></li>
+                    <li><a href="/friends">Друзья</a></li>
+                    <li><a href="/settings">Настройки</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <meta charset="UTF-8">
+        <meta name="viewport"
+              content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/home.css')}}"/>
+        <link rel="icon" href="{{url_for('static', filename='image/AC_icon.png')}}">
+        <title>{{ name }} {{ last_name }}</title>
+    </head>
+    <body>
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style.css')}}"/>
     <link rel="icon" href="{{url_for('static', filename='image/AC_icon.png')}}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <title>{% block title %}{% endblock %}</title>
 </head>
 <body>
-
 {% block content %}{% endblock %}
 </body>
 </html>

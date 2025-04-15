@@ -4,11 +4,16 @@ from models.users import User
 from models.avatars import Avatar
 from models.friends import Friend
 from models.about_users import AboutUser
+from models.news import News
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 # from flask_cors import CORS
 from check_email import is_valid_email as check_email_to_correct
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from base64 import b64decode, b64encode
+from datetime import datetime
+from translate import format_date_russian
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 # CORS(app)
@@ -16,6 +21,16 @@ app.secret_key = 'DOTA 2'
 db_session.global_init('db/db.db')
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))  # Базовая директория проекта
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')  # Папка для загрузки изображений
+
+# Создаем папку для загрузок, если она не существует
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+# Настройка Flask
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 def main():
@@ -46,7 +61,6 @@ def start():
 def home():
     if not current_user.is_authenticated:
         return redirect("/")
-
     db_sess = db_session.create_session()
     try:
         ava = db_sess.query(Avatar).filter_by(user_id=current_user.id).first().image_data
@@ -61,6 +75,11 @@ def home():
         hide_interests = about.hide_interests
         hide_birthday = about.hide_birthday
         hide_city = about.hide_city
+        news_list = db_sess.query(News).filter(News.user_id == current_user.id).order_by(News.created_at.desc()).all()
+
+        for news in news_list:
+            news.created_at = format_date_russian(news.created_at)
+
         info = {
             'name': name,
             'last_name': last_name,
@@ -72,11 +91,74 @@ def home():
             "hide_interests": hide_interests,
             "hide_birthday": hide_birthday,
             "hide_city": hide_city,
+            "news_list": news_list,
         }
         return render_template("home.html", **info)
+
     except Exception as e:
         print(f"Error: {e}")
         return redirect("/")
+
+
+@app.route('/add-news', methods=['POST'])
+def add_news():
+    db_sess = db_session.create_session()
+    data = request.get_json()
+    title = data.get('title')
+    content = data.get('content')
+    image_base64 = data.get('image')
+
+    if not title or not content:
+        return jsonify({"error": "Заполните все поля"}), 400
+
+    # Сохраняем новость в базе данных
+    news = News(title=title, content=content, image=image_base64, user_id=current_user.id)
+    db_sess.add(news)
+    db_sess.commit()
+
+    return jsonify({
+        "id": news.id,
+        "title": news.title,
+        "content": news.content,
+        "image": news.image,  # Возвращаем Base64-строку
+        "created_at": format_date_russian(news.created_at),
+    })
+
+
+@app.route('/delete-news/<int:news_id>', methods=['DELETE'])
+@login_required
+def delete_news(news_id):
+    db_sess = db_session.create_session()
+    news = db_sess.query(News).get(news_id)
+
+    if not news or news.user_id != current_user.id:
+        return jsonify({"error": "Новость не найдена или недоступна"}), 404
+
+    db_sess.delete(news)
+    db_sess.commit()
+
+    return jsonify({"success": "Новость удалена"}), 200
+
+
+@app.route('/edit-news/<int:news_id>', methods=['PUT'])
+@login_required
+def edit_news(news_id):
+    db_sess = db_session.create_session()
+    news = db_sess.query(News).get(news_id)
+    if not news or news.user_id != current_user.id:
+        return jsonify({"error": "Новость не найдена или недоступна"}), 404
+
+    data = request.get_json()
+    news.title = data.get('title')
+    news.content = data.get('content')
+    db_sess.commit()
+
+    return jsonify({
+        "id": news.id,
+        "title": news.title,
+        "content": news.content,
+        "created_at": news.created_at.strftime('%d %B %Y')
+    }), 200
 
 
 @app.route('/prof/<login>', methods=["GET", "POST"])  # Профиль другого пользователя
@@ -84,14 +166,18 @@ def user(login):
     if not current_user.is_authenticated:
         return redirect('/')
     db_sess = db_session.create_session()
-    person = db_sess.query(User).filter(or_(User.special_login == login, User.id == login)).first()
-    if person.special_login == current_user.special_login:
-        return redirect('/home')
+    person = db_sess.query(User).filter(or_(User.special_login == login, User.email == login)).first()
     if person is None:
         return redirect('/')
+    if person.special_login == current_user.special_login:
+        return redirect('/home')
     try:
         avatar_bytes = db_sess.query(Avatar).filter(Avatar.user_id == person.id).first().image_data
         avatar_bytes = str(avatar_bytes).replace("b'", "").replace("'", "")
+        about_user = db_sess.query(AboutUser).filter(AboutUser.user_id == person.id).first()
+        hide_interests = about_user.hide_interests
+        hide_birthday = about_user.hide_birthday
+        hide_city = about_user.hide_city
 
         in_f = db_sess.query(Friend).filter(Friend.user_id == current_user.id, Friend.friend_id == person.id).first()
         out_f = db_sess.query(Friend).filter(Friend.friend_id == current_user.id, Friend.user_id == person.id).first()
@@ -115,12 +201,15 @@ def user(login):
         "ava": avatar_bytes,
         "user_id": person.id,
         "check": check,
+        "hide_interests": hide_interests,
+        "hide_birthday": hide_birthday,
+        "hide_city": hide_city,
     }
     return render_template('viewprof.html', **info)
 
 
 @app.route("/privacy-settings",
-           methods=["POST"])  # Это каждый отдельный пользователь можут поставить отображение своих данных
+           methods=["POST"])  # Это каждый отдельный пользователь могут поставить отображение своих данных
 def privacy_settings():
     data = request.json
     db_sess = db_session.create_session()
@@ -236,7 +325,7 @@ def register_new_user():
 
     avatar = Avatar(image_data=ava64, user_id=user.id)
 
-    about = AboutUser(user_id=user.id, city='-', birthday="-", interests='-')
+    about = AboutUser(user_id=user.id, city='Тут пока пусто', birthday="Тут пока пусто", interests='Тут пока пусто')
 
     db_sess.add(avatar)
     db_sess.add(about)
@@ -248,7 +337,7 @@ def register_new_user():
     return 'ok'
 
 
-@app.route('/privacy', methods=['GET'])  # Политика конфеденциальности (хз как это пишется)
+@app.route('/privacy', methods=['GET'])  # Политика конфиденциальности (хз как это пишется)
 def privacy():
     with open('static/text/privacy.txt', 'r', encoding='utf-8') as f:
         privacy_text = f.read()
@@ -268,10 +357,18 @@ def user_agreement():
     return render_template('user_agreement.html', **info)
 
 
-@app.route('/feed', methods=['GET', 'POST'])  # Главная (после регистрации)
-@login_required
+@app.route('/feed', methods=['GET'])
 def feed():
-    return render_template('feed.html')
+    db_sess = db_session.create_session()
+    news_list = db_sess.query(News).order_by(News.created_at.desc()).all()
+
+    for news in news_list:
+        news.created_at = format_date_russian(news.created_at)
+
+    if current_user.is_authenticated:
+        return render_template('feed.html', show_friend_requests=True, show_search_people=True, news_list=news_list)
+    else:
+        return render_template('feed.html', show_friend_requests=False, show_search_people=False, news_list=news_list)
 
 
 @app.route("/friends", methods=["GET"])
@@ -280,7 +377,7 @@ def friends():  # Все твои друзья
     db_sess = db_session.create_session()
     try:
         user = current_user.id
-        friends = db_sess.query(Friend).filter(Friend.user_id == user)
+        friends = db_sess.query(Friend).filter(Friend.user_id == user).all()
         for i in friends:
             print(i)
 
@@ -418,13 +515,16 @@ def accept_friend_request():
 def friend_requests():
     db_sess = db_session.create_session()
 
-    incoming_requests = db_sess.query(Friend).filter(
-        Friend.friend_id == current_user.id).all()
+    incoming_requests = db_sess.query(Friend).filter(and_(
+        Friend.friend_id == current_user.id,
+        Friend.stat == 0
+    )).all()
 
     requests_data = [
         {
             "id": req.id,
-            "sender_name": f"{req.sender.name} {req.sender.last_name}"
+            "sender_name": f"{req.user.name} {req.user.last_name}",
+            "special_login": req.user.special_login,
         }
         for req in incoming_requests
     ]
@@ -456,7 +556,8 @@ def search_people():
                 {
                     "id": user.id,
                     "name": user.name,
-                    "last_name": user.last_name
+                    "last_name": user.last_name,
+                    "special_login": user.special_login,
                 }
                 for user in users
             ]
@@ -465,9 +566,6 @@ def search_people():
 
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
-
-
-
 
 
 if __name__ == '__main__':

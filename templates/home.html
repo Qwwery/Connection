@@ -1,6 +1,21 @@
 <!doctype html>
 <html lang="ru">
 <head>
+    <aside class="left-panel">
+        <div class="logo">
+            <a href="/" class="logo_a">Connection</a>
+        </div>
+        <nav class="main-nav">
+            <ul class="main_nav_ul">
+                <li><a href="/feed">Главная</a></li>
+                <li><a href="/home">Профиль</a></li>
+                <li><a href="/news">Новости</a></li>
+                <li><a href="/messages">Сообщения</a></li>
+                <li><a href="/friends">Друзья</a></li>
+                <li><a href="/settings">Настройки</a></li>
+            </ul>
+        </nav>
+    </aside>
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
@@ -10,8 +25,6 @@
     <title>{{ name }} {{ last_name }}</title>
 </head>
 <body>
-
-
 <div class="profile-container">
     <div class="profile-left">
         <img src="data:image/jpg;base64,{{ ava }}" alt="Profile Picture" class="profile-pic">
@@ -25,26 +38,46 @@
         <section class="profile-info">
             <ul>
                 <li><strong>Почта:</strong> {{ email }} (скрыто для других)</li>
-                <li><strong>Интересы:</strong> <span id="interests_info">{% if not hide_interests %}{{ interests }}{% else %}Скрыто{% endif %}</span></li>
-                <li><strong>Дата рождения:</strong> <span id="birthday_info">{% if not hide_birthday %}{{ birthday }}{% else %}Скрыто{% endif %}</span></li>
-                <li><strong>Город:</strong> <span id="city_info">{% if not hide_city %}{{ city }}{% else %}Скрыто{% endif %}</span></li>
+                <li><strong>Интересы:</strong> <span id="interests_info">{% if not hide_interests %}{{ interests }}{% else %}Скрыто{% endif %}</span>
+                </li>
+                <li><strong>Дата рождения:</strong> <span id="birthday_info">{% if not hide_birthday %}{{ birthday }}{% else %}Скрыто{% endif %}</span>
+                </li>
+                <li><strong>Город:</strong> <span id="city_info">{% if not hide_city %}{{ city }}{% else %}Скрыто{% endif %}</span>
+                </li>
             </ul>
         </section>
-        <section class="profile-posts">
-            <h2>Недавние публикации</h2>
-            <div class="post">
-                <h3>Заголовок публикации</h3>
-                <p>Текст публикации...</p>
-                <span class="post-date">1 Января 2025</span>
+        <div class="profile-posts">
+            <div class="posts-header">
+                <h2>Недавние публикации</h2>
+                <button id="addPostButton" class="add-post-button">+</button>
             </div>
-            <div class="post">
-                <h3>Другой заголовок</h3>
-                <p>Другой текст публикации...</p>
-                <span class="post-date">31 Декабря 2024</span>
+            <div class="post-container">
+                {% if news_list %}
+                {% for news in news_list %}
+                <div class="post" data-id="{{ news.id }}">
+                    <h3>{{ news.title }}</h3>
+                    <p>{{ news.content }}</p>
+                    {% if news.image %}
+                    <img src="{{ news.image }}" alt="Изображение новости" class="post-image">
+                    {% endif %}
+                    <span class="post-date">{{ news.created_at }}</span>
+                    <div class="dropdown">
+                        <button class="dropdown-button">...</button>
+                        <div class="dropdown-content">
+                            <a href="#" class="edit-news" data-id="{{ news.id }}">Редактировать</a>
+                            <a href="#" class="delete-news" data-id="{{ news.id }}">Удалить</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p id="netnowostey">Нет новостей.</p>
+                {% endif %}
             </div>
-        </section>
+        </div>
     </div>
 </div>
+
 
 <!-- Модальное окно -->
 <div id="editModal" class="modal">
@@ -55,37 +88,91 @@
             <div class="form-group">
                 <label for="interests">Интересы:</label>
                 <div class="input-with-buttons">
-                    <input type="text" id="interests" name="interests" value="{{ interests }}" style="display: {% if hide_interests %}none{% endif %};" class="form-input">
+                    <input type="text" id="interests" name="interests" value="{{ interests }}" class="form-input">
                     <div class="toggle-buttons">
-                        <button id="showInt" class="toggle-button" style="display: {% if not hide_interests %}none{% endif %};">Показывать</button>
-                        <button id="hideInt" class="toggle-button" style="display: {% if hide_interests %}none{% endif %};">Скрывать</button>
+                        <button id="showInt" class="toggle-button"
+                                style="display: {% if not hide_interests %}none{% endif %};">Показывать
+                        </button>
+                        <button id="hideInt" class="toggle-button"
+                                style="display: {% if hide_interests %}none{% endif %};">Скрывать
+                        </button>
                     </div>
                 </div>
             </div>
             <div class="form-group">
-                <br>
                 <label for="birthday">Дата рождения:</label>
                 <div class="input-with-buttons">
-                    <input type="date" id="birthday" name="birthday" value="{{ birthday }}" style="display: {% if hide_birthday %}none{% endif %};"  class="form-input">
+                    <input type="text" id="birthday" name="birthday" value="{{ birthday }}" class="form-input">
                     <div class="toggle-buttons">
-                        <button id="showBir" class="toggle-button" style="display: {% if not hide_birthday %}none{% endif %};">Показывать</button>
-                        <button id="hideBir" class="toggle-button" style="display: {% if hide_birthday %}none{% endif %};">Скрывать</button>
+                        <button id="showBir" class="toggle-button"
+                                style="display: {% if not hide_birthday %}none{% endif %};">Показывать
+                        </button>
+                        <button id="hideBir" class="toggle-button"
+                                style="display: {% if hide_birthday %}none{% endif %};">Скрывать
+                        </button>
                     </div>
                 </div>
             </div>
             <div class="form-group">
-                <br>
                 <label for="city">Город:</label>
                 <div class="input-with-buttons">
-                    <input type="text" id="city" name="city" value="{{ city }}" style="display: {% if hide_city %}none{% endif %};"  class="form-input">
+                    <input type="text" id="city" name="city" value="{{ city }}" class="form-input">
                     <div class="toggle-buttons">
-                        <button id="showCit" class="toggle-button" style="display: {% if not hide_city %}none{% endif %};">Показывать</button>
-                        <button id="hideCit" class="toggle-button" style="display: {% if hide_city %}none{% endif %};">Скрывать</button>
+                        <button id="showCit" class="toggle-button"
+                                style="display: {% if not hide_city %}none{% endif %};">Показывать
+                        </button>
+                        <button id="hideCit" class="toggle-button" style="display: {% if hide_city %}none{% endif %};">
+                            Скрывать
+                        </button>
                     </div>
                 </div>
             </div>
-            <br>
             <button type="submit" class="save-button">Сохранить изменения</button>
+        </form>
+    </div>
+</div>
+
+
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <span id="addClose" class="close">&times;</span>
+        <form id="addNewsForm" enctype="multipart/form-data">
+            <h2>Добавление новости</h2>
+            <div class="form-group">
+                <label for="title">Заголовок новости</label>
+                <input type="text" id="title" name="title" class="form-input" placeholder="Введите заголовок" required>
+            </div>
+            <div class="form-group">
+                <label for="textNews">Текст новости</label>
+                <textarea id="textNews" name="textNews" class="form-textarea" placeholder="Введите текст"
+                          maxlength="512" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="image">Фотография (пока максимум 1)</label>
+                <input type="file" id="image" name="images[]" accept="image/*">
+            </div>
+            <button type="submit" class="save-button">Добавить новость</button>
+        </form>
+    </div>
+</div>
+
+
+<div id="editNewsModal" class="modal">
+    <div class="modal-content">
+        <span id="editClose" class="close">&times;</span>
+        <form id="editNewsForm">
+            <h2>Редактирование новости</h2>
+            <div class="form-group">
+                <label for="editTitle">Заголовок новости</label>
+                <input type="text" id="editTitle" name="title" class="form-input" placeholder="Введите заголовок"
+                       maxlength="40">
+            </div>
+            <div class="form-group">
+                <label for="editText">Текст новости</label>
+                <textarea id="editText" name="text" class="form-input form-textarea"
+                          placeholder="Введите текст" maxlength="512"></textarea>
+            </div>
+            <button type="button" id="saveEditNews" class="save-button">Сохранить изменения</button>
         </form>
     </div>
 </div>
@@ -93,58 +180,297 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function () {
+        function updateNoNewsMessage() {
+            var hasNews = $('.post-container .post').length > 0;
+            if (!hasNews) {
+                $('#netnowostey').show(); // Показываем сообщение "Нет новостей"
+            } else {
+                $('#netnowostey').hide(); // Скрываем сообщение, если новости есть
+            }
+        }
+
+        // === Закрытие модального окна редактирования новости ===
+        var editNewsModal = $('#editNewsModal');
+        var editClose = $('#editClose');
+
+        updateNoNewsMessage();
+
+        // Закрытие по кнопке "×"
+        editClose.click(function () {
+            editNewsModal.hide();
+        });
+
+        // Закрытие при клике вне модального окна
+        $(document).on('mousedown', function (event) {
+            if ($(event.target).is(editNewsModal)) {
+                editNewsModal.hide();
+            }
+        });
+
+
+        // === 1. Добавление новости ===
+        $('#addNewsForm').submit(function (event) {
+            event.preventDefault();
+
+            // Собираем данные формы
+            var title = $('#title').val();
+            var content = $('#textNews').val();
+            var imageInput = document.getElementById('image');
+
+            if (!title || !content) {
+                alert("Заполните все поля!");
+                return;
+            }
+
+            // Преобразуем изображение в Base64
+            if (imageInput.files.length > 0) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var base64Image = e.target.result;
+                    if (imageInput.files[0].size > 5 * 1024 * 1024) { // 5 МБ
+                        alert("Файл слишком большой! Максимальный размер: 5 МБ.");
+                        return;
+                    }
+
+                    // Отправляем данные на сервер
+                    $.ajax({
+                        url: '/add-news',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            title: title,
+                            content: content,
+                            image: base64Image // Передаем Base64-строку
+                        }),
+                        success: function (response) {
+                            // Создаем HTML-разметку для новой новости
+                            var newPost = `
+                    <div class="post" data-id="${response.id}">
+                        <h3>${response.title}</h3>
+                        <p>${response.content}</p>
+                        ${response.image ? `<img src="${response.image}" alt="Изображение новости" class="post-image">` : ''}
+                        <span class="post-date">${response.created_at}</span>
+                        <div class="dropdown">
+                            <button class="dropdown-button">...</button>
+                            <div class="dropdown-content">
+                                <a href="#" class="edit-news" data-id="${response.id}">Редактировать</a>
+                                <a href="#" class="delete-news" data-id="${response.id}">Удалить</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                            // Добавляем новость в начало списка
+                            $('.post-container').prepend(newPost);
+
+                            // Очищаем форму
+                            $('#title').val('');
+                            $('#textNews').val('');
+                            var hasNews = $('.post-container .post').length > 0;
+                            if (!hasNews) {
+                                $('#netnowostey').show(); // Показываем сообщение "Нет новостей"
+                            } else {
+                                $('#netnowostey').hide(); // Скрываем сообщение, если новости есть
+                            }
+                            window.location.reload();
+
+                            // Закрываем модальное окно
+                            $('#addModal').hide();
+                        },
+                        error: function (xhr) {
+                            alert("Ошибка при добавлении новости: " + xhr.responseJSON.error);
+                        }
+                    });
+                };
+                reader.readAsDataURL(imageInput.files[0]);
+            } else {
+                // Если изображение не выбрано, отправляем данные без него
+                $.ajax({
+                    url: '/add-news',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        title: title,
+                        content: content
+                    }),
+                    success: function (response) {
+                        var newPost = `
+                    <div class="post" data-id="${response.id}">
+                        <h3>${response.title}</h3>
+                        <p>${response.content}</p>
+                        <span class="post-date">${response.created_at}</span>
+                        <div class="dropdown">
+                            <button class="dropdown-button">...</button>
+                            <div class="dropdown-content">
+                                <a href="#" class="edit-news" data-id="${response.id}">Редактировать</a>
+                                <a href="#" class="delete-news" data-id="${response.id}">Удалить</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                        $('.post-container').prepend(newPost);
+                        $('#title').val('');
+                        $('#textNews').val('');
+                        $('#addModal').hide();
+                        window.location.reload();
+                    },
+                    error: function (xhr) {
+                        alert("Ошибка при добавлении новости: " + xhr.responseJSON.error);
+                    }
+                });
+            }
+        });
+
+        // === 2. Удаление новости ===
+        $(document).on('click', '.delete-news', function (event) {
+            event.preventDefault();
+
+            var newsId = $(this).data('id'); // Получаем ID новости
+            var postElement = $(this).closest('.post'); // Находим элемент новости
+
+            if (confirm("Вы уверены, что хотите удалить эту новость?")) {
+                $.ajax({
+                    url: '/delete-news/' + newsId,
+                    type: 'DELETE',
+                    success: function () {
+                        // Удаляем новость из интерфейса
+                        postElement.remove();
+                        updateNoNewsMessage();
+                        window.location.reload();
+
+                    },
+                    error: function () {
+                        alert("Ошибка при удалении новости.");
+                    }
+                });
+            }
+        });
+
+        // === 3. Редактирование новости ===
+        $(document).on('click', '.edit-news', function (event) {
+            event.preventDefault();
+
+            var newsId = $(this).data('id'); // Получаем ID новости
+            var title = $(this).closest('.post').find('h3').text(); // Текущий заголовок
+            var content = $(this).closest('.post').find('p').text(); // Текущее содержание
+
+            // Открываем модальное окно для редактирования
+            $('#editNewsModal').show();
+
+            // Заполняем форму текущими данными
+            $('#editTitle').val(title);
+            $('#editText').val(content);
+
+            // Сохраняем изменения
+            $('#saveEditNews').off().click(function () {
+                var updatedData = {
+                    title: $('#editTitle').val(),
+                    content: $('#editText').val()
+                };
+
+                $.ajax({
+                    url: '/edit-news/' + newsId,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(updatedData),
+                    success: function (response) {
+                        // Обновляем новость в интерфейсе
+                        $(`.post[data-id="${newsId}"] h3`).text(response.title);
+                        $(`.post[data-id="${newsId}"] p`).text(response.content);
+
+                        // Закрываем модальное окно
+                        $('#editNewsModal').hide();
+                    },
+                    error: function () {
+                        alert("Ошибка при редактировании новости.");
+                    }
+                });
+            });
+        });
+
+        // === 4. Управление выпадающим меню ===
+        $('.dropdown-button').click(function (event) {
+            event.stopPropagation(); // Предотвращаем закрытие меню при клике на кнопку
+            $(this).siblings('.dropdown-content').toggle();
+        });
+
+        $(document).click(function () {
+            $('.dropdown-content').hide(); // Закрываем все выпадающие меню при клике вне них
+        });
+
+        // === 5. Открытие/закрытие модальных окон ===
+        var addNews = $('#addPostButton');
+        var addModal = $('#addModal');
+        var addClose = $('#addClose');
+
         var modal = $('#editModal');
         var btn = $('#editButton');
         var span = $('#close');
 
-        // Открываем модальное окно
+        // Открытие/закрытие окна добавления новостей
+        addNews.click(function () {
+            addModal.show();
+        });
+
+        addClose.click(function () {
+            addModal.hide();
+        });
+
+        // Открытие/закрытие модального окна настроек
         btn.click(function () {
             modal.show();
         });
 
-        // Закрываем модальное окно
         span.click(function () {
             modal.hide();
         });
 
-        // При клике вне модального окна
+        // Закрытие модальных окон при клике вне их
         $(window).on('mousedown', function (event) {
             if ($(event.target).is(modal)) {
                 modal.hide();
             }
+            if ($(event.target).is(addModal)) {
+                addModal.hide();
+            }
         });
 
-        // Обработка пунктов скрытия/показа
+        // === 6. Обработка пунктов скрытия/показа ===
         $('#showInt').click(function (e) {
             e.preventDefault();
             $('#interests').show();
             $(this).hide();
             $('#hideInt').show();
         });
+
         $('#hideInt').click(function (e) {
             e.preventDefault();
             $('#interests').hide();
             $(this).hide();
             $('#showInt').show();
         });
+
         $('#showBir').click(function (e) {
             e.preventDefault();
             $('#birthday').show();
             $(this).hide();
             $('#hideBir').show();
         });
+
         $('#hideBir').click(function (e) {
             e.preventDefault();
             $('#birthday').hide();
             $(this).hide();
             $('#showBir').show();
         });
+
         $('#showCit').click(function (e) {
             e.preventDefault();
             $('#city').show();
             $(this).hide();
             $('#hideCit').show();
         });
+
         $('#hideCit').click(function (e) {
             e.preventDefault();
             $('#city').hide();
@@ -152,9 +478,10 @@
             $('#showCit').show();
         });
 
-        // Отправка формы
+        // === 7. Отправка формы настроек ===
         $('#settings-form').submit(function (event) {
             event.preventDefault();
+
             // Собираем данные для отправки
             var formData = {
                 interests: $('#interests').val(),
@@ -164,6 +491,7 @@
                 hide_birthday: $('#birthday').is(':hidden'),
                 hide_city: $('#city').is(':hidden')
             };
+
             $.ajax({
                 url: '/privacy-settings',
                 type: 'POST',
@@ -190,11 +518,8 @@
                     alert("Ошибка при сохранении настроек.");
                 }
             });
+
             modal.hide();
         });
     });
 </script>
-
-
-</body>
-</html>

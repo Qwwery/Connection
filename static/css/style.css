@@ -34,18 +34,20 @@ header.authorization {
 
 
 body {
-    overflow-y: hidden;
-    background-color: #007bff;
     font-family: Arial, sans-serif;
+    background-color: #007bff;
+    color: #fff;
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    height: 100vh;
-    margin: 0;
+    min-height: 100vh;
 }
 
 h1 {
-    color: #ffffff;
+    color: #fff;
+    margin-bottom: 20px;
 }
 
 h2 {
@@ -82,7 +84,7 @@ button {
     padding: 10px;
     border-radius: 4px;
     cursor: pointer;
-    width: 100%;
+    /*width: 100%;*/
     transition: background-color 0.3s;
 }
 
@@ -101,6 +103,10 @@ button:hover {
 
 /*----------------------------------------------------------------------------------------------*/
 body.privacy {
+    color: black;
+}
+
+h3 {
     color: black;
 }
 
@@ -296,4 +302,220 @@ body.privacy {
     font-size: 1.25rem;
     color: #888;
     margin-top: 20px;
+}
+
+#searchForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#searchQuery {
+    width: 300px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+button[type="submit"] {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+#searchResults {
+    margin-top: 20px;
+}
+
+.user {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.user span {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.add-friend-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.add-friend-btn:hover {
+    background-color: #0056b3;
+}
+
+.profile-pic {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    margin: 0 auto 20px;
+    border: 2px solid #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.profile-pic-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.view-profile-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+}
+
+.view-profile-btn:hover {
+    background-color: #0056b3;
+}
+
+
+.friends-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.friends-container h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #007bff;
+}
+
+.friends-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.friend-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.friend-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-pic-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.profile-pic {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.friend-info {
+    flex-grow: 1;
+}
+
+.friend-name {
+    font-size: 16px;
+    font-weight: bold;
+    color: #007bff;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.friend-name:hover {
+    text-decoration: underline;
+}
+
+.friend-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.message-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+}
+
+.message-btn:hover {
+    background-color: #218838;
+}
+
+.remove-friend-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.remove-friend-btn:hover {
+    background-color: #c82333;
+}
+
+.no-friends-message {
+    text-align: center;
+    font-size: 18px;
+    color: #666;
+}
+
+.error-message {
+    text-align: center;
+    color: #dc3545;
+    font-size: 20px;
 }

@@ -5,6 +5,7 @@ from models.avatars import Avatar
 from models.friends import Friend
 from models.about_users import AboutUser
 from models.news import News
+from models.messages import Message
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 # from flask_cors import CORS
 from check_email import is_valid_email as check_email_to_correct
@@ -14,6 +15,7 @@ from datetime import datetime
 from translate import format_date_russian
 import os
 from werkzeug.utils import secure_filename
+from get_info import get_last_message_text, get_friend_status
 
 app = Flask(__name__)
 # CORS(app)
@@ -79,7 +81,6 @@ def home():
 
         for news in news_list:
             news.created_at = format_date_russian(news.created_at)
-
         info = {
             'name': name,
             'last_name': last_name,
@@ -166,7 +167,8 @@ def user(login):
     if not current_user.is_authenticated:
         return redirect('/')
     db_sess = db_session.create_session()
-    person = db_sess.query(User).filter(or_(User.special_login == login, User.email == login)).first()
+    person = db_sess.query(User).filter(or_(User.special_login == login, User.id == login)).first()
+    print(person)
     if person is None:
         return redirect('/')
     if person.special_login == current_user.special_login:
@@ -181,20 +183,22 @@ def user(login):
 
         in_f = db_sess.query(Friend).filter(Friend.user_id == current_user.id, Friend.friend_id == person.id).first()
         out_f = db_sess.query(Friend).filter(Friend.friend_id == current_user.id, Friend.user_id == person.id).first()
-        check = -1
-        if in_f:
-            if out_f:
-                check = 1
-            else:
-                check = 0
+        if in_f and out_f:
+            check = in_f.stat
         else:
-            if out_f:
-                check = 2
+            check = -1
 
 
     except Exception as e:
         print(f"Error: {e}")
         return redirect('/')
+
+    news_person = db_sess.query(News).filter(
+        or_(News.user_id == person.id, News.user_id == person.special_login)).order_by(News.created_at.desc()).all()
+
+    for news in news_person:
+        news.created_at = format_date_russian(news.created_at)
+
     info = {
         'name': person.name,
         "last_name": person.last_name,
@@ -204,6 +208,7 @@ def user(login):
         "hide_interests": hide_interests,
         "hide_birthday": hide_birthday,
         "hide_city": hide_city,
+        "news_list": news_person,
     }
     return render_template('viewprof.html', **info)
 
@@ -377,9 +382,9 @@ def friends():  # Все твои друзья
     db_sess = db_session.create_session()
     try:
         user = current_user.id
-        friends = db_sess.query(Friend).filter(Friend.user_id == user).all()
-        for i in friends:
-            print(i)
+        friends = db_sess.query(Friend).filter(and_(Friend.user_id == user, Friend.stat == 1)).all()
+        for friend in friends:
+            friend.user.avatar.image_data = str(friend.user.avatar.image_data).replace("b'", "").replace("'", "")
 
         info = {
             "friends": friends,
@@ -392,12 +397,13 @@ def friends():  # Все твои друзья
             "error": True
         }
         return render_template("friends.html", **info)
+    finally:
+        db_sess.close()
 
 
 @app.route('/send-friend-request', methods=['POST'])
 @login_required
 def send_friend_request():
-    print(1)
     try:
         # Получаем данные из запроса
         data = request.get_json()
@@ -427,8 +433,17 @@ def send_friend_request():
             name_friends=friend.name,  # Например, статус "в ожидании"
             stat=0,
         )
-        print(2)
+
+        new_friend_request_2 = Friend(
+            user_id=friend_id,
+            friend_id=current_user.id,
+            name_friends=current_user.name,  # Например, статус "в ожидании"
+            stat=2,
+        )
+
         db_sess.add(new_friend_request)
+        db_sess.add(new_friend_request_2)
+
         db_sess.commit()
 
         return jsonify({'success': True, 'message': 'Заявка успешно отправлена.'}), 200
@@ -444,21 +459,16 @@ def cancel_friend_request():
         # Получаем данные из запроса
         data = request.get_json()
         friend_id = data.get('friend_id')
-
         if not friend_id:
             return jsonify({'success': False, 'message': 'ID друга не указан.'}), 400
-
         # Проверяем, что заявка существует
         db_sess = db_session.create_session()
         existing_request = db_sess.query(Friend).filter(
             Friend.user_id == current_user.id,
-            Friend.friend_id == friend_id,
-            stat=-1,
+            Friend.friend_id == friend_id
         ).first()
-
         if not existing_request:
             return jsonify({'success': False, 'message': 'Заявка не найдена.'}), 400
-
         # Удаляем заявку
         db_sess.delete(existing_request)
         db_sess.commit()
@@ -476,7 +486,7 @@ def accept_friend_request():
         # Получаем данные из запроса
         data = request.get_json()
         friend_id = data.get('friend_id')
-
+        print(friend_id)
         if not friend_id:
             return jsonify({'success': False, 'message': 'ID друга не указан.'}), 400
 
@@ -495,13 +505,12 @@ def accept_friend_request():
             return jsonify({'success': False, 'message': 'Пользователь не найден.'}), 400
 
         # Создаем запись о дружбе для текущего пользователя
-        in_f = Friend(
-            user_id=current_user.id,
-            friend_id=friend_id,
-            name_friends=friend.name,
-            stat=1,
-        )
-        db_sess.add(in_f)
+        db_sess.query(Friend).filter(and_(Friend.friend_id == current_user.id, Friend.user_id == friend_id)).update({
+            "stat": 1
+        })
+        db_sess.query(Friend).filter(and_(Friend.user_id == current_user.id, Friend.friend_id == friend_id)).update({
+            "stat": 1
+        })
         db_sess.commit()
 
         return jsonify({'success': True, 'message': 'Заявка успешно принята.'}), 200
@@ -510,24 +519,69 @@ def accept_friend_request():
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
+@app.route('/reject-friend-request', methods=['POST'])
+@login_required
+def reject_friend_request():
+    try:
+        data = request.get_json()
+        friend_id = data.get('friend_id')
+        if not friend_id:
+            return jsonify({'success': False, 'message': 'ID друга не указан.'}), 400
+
+        db_sess = db_session.create_session()
+        # Находим заявку в друзья
+        friend_request = db_sess.query(Friend).filter(
+            Friend.friend_id == current_user.id,
+            Friend.user_id == friend_id,
+            Friend.stat == 0
+        ).first()
+
+        friend_request_2 = db_sess.query(Friend).filter(
+            Friend.friend_id == friend_id,
+            Friend.user_id == current_user.id,
+            Friend.stat == 2
+        ).first()
+
+        if not friend_request:
+            return jsonify({'success': False, 'message': 'Заявка не найдена.'}), 404
+
+        # Удаляем заявку
+        db_sess.delete(friend_request)
+        db_sess.delete(friend_request_2)
+        db_sess.commit()
+
+        return jsonify({'success': True, 'message': 'Заявка отклонена.'}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        db_sess.close()
+
+
 @app.route('/friend-requests')
 @login_required
 def friend_requests():
     db_sess = db_session.create_session()
+    try:
+        incoming_requests = db_sess.query(Friend).filter(and_(
+            Friend.friend_id == current_user.id,
+            Friend.stat == 0
+        )).all()
 
-    incoming_requests = db_sess.query(Friend).filter(and_(
-        Friend.friend_id == current_user.id,
-        Friend.stat == 0
-    )).all()
-
-    requests_data = [
-        {
-            "id": req.id,
-            "sender_name": f"{req.user.name} {req.user.last_name}",
-            "special_login": req.user.special_login,
-        }
-        for req in incoming_requests
-    ]
+        requests_data = [
+            {
+                "id": req.id,
+                "sender_name": f"{req.user.name} {req.user.last_name}",
+                "special_login": req.user.special_login,
+                "friend_id": req.user.id,
+                "ava": str(req.user.avatar.image_data).replace("b'", "").replace("'", ""),
+            }
+            for req in incoming_requests
+        ]
+    except Exception as e:
+        print(str(e))
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        db_sess.close()
 
     return render_template("friend_requests.html", incoming_requests=requests_data)
 
@@ -548,24 +602,236 @@ def search_people():
                 return jsonify({'success': False, 'message': 'Запрос пуст.'}), 400
 
             db_sess = db_session.create_session()
-            users = db_sess.query(User).filter(
-                (User.name.ilike(f"%{query}%")) | (User.last_name.ilike(f"%{query}%") |
-                                                   (User.special_login.ilike(f"%{query}%")))).all()
 
+            # Поиск пользователей
+            users = db_sess.query(User).filter(
+                (User.name.ilike(f"%{query}%")) |
+                (User.last_name.ilike(f"%{query}%")) |
+                (User.special_login.ilike(f"%{query}%"))
+            ).all()
+
+            # Формируем данные для ответа
             users_data = [
                 {
                     "id": user.id,
                     "name": user.name,
                     "last_name": user.last_name,
                     "special_login": user.special_login,
+                    "ava": str(user.avatar.image_data).replace("b'", "").replace("'", ""),
+                    "friend_status": get_friend_status(user.id),
                 }
                 for user in users
+                if user.id != current_user.id
             ]
 
             return jsonify({'success': True, 'users': users_data}), 200
 
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/remove-friend', methods=['POST'])
+@login_required
+def remove_friend():
+    try:
+        data = request.get_json()
+        friend_id = data.get('friend_id')
+
+        if not friend_id:
+            return jsonify({'success': False, 'message': 'ID друга не указан.'}), 400
+
+        db_sess = db_session.create_session()
+
+        # Удаляем записи о дружбе
+        db_sess.query(Friend).filter(
+            ((Friend.user_id == current_user.id) & (Friend.friend_id == friend_id)) |
+            ((Friend.user_id == friend_id) & (Friend.friend_id == current_user.id))
+        ).delete(synchronize_session=False)
+
+        db_sess.commit()
+
+        return jsonify({'success': True, 'message': 'Друг успешно удален.'}), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route("/pending-friend", methods=["POST"])
+@login_required
+def pending_friend():
+    data = request.get_json()
+    friend_id = data.get('friend_id')
+    print(friend_id)
+    if not friend_id:
+        return jsonify({"success": False, "message": "Нет id пользователя."}), 400
+
+    try:
+        db_sess = db_session.create_session()
+
+        db_sess.query(Friend).filter(and_(Friend.user_id == current_user.id, Friend.friend_id == friend_id)).update({
+            "stat": -1
+        })
+        db_sess.query(Friend).filter(and_(Friend.user_id == friend_id, Friend.friend_id == current_user.id)).update({
+            "stat": -1
+        })
+        db_sess.commit()
+    except Exception as e:
+        print("Ошибка с изменением данных в БД")
+        return jsonify({"success": False, "message": str(e)}), 500
+    return jsonify({"success": True, "message": "Заявка отменена"}), 200
+
+
+# @app.route("/send-message", methods=["POST"])
+# @login_required
+# def send_message():
+#     try:
+#         print(1)
+#         data = request.get_json()
+#         friend_id = data.get("friend_id")
+#         text = data.get("text")  # Используем "text" вместо "message"
+#         print(2)
+#         if not friend_id or not text:
+#             return jsonify({"success": False, "message": "Недостаточно данных."}), 400
+#         print(3)
+#         db_sess = db_session.create_session()
+#
+#         # Создаем новое сообщение
+#         new_message = Message(
+#             sender_id=current_user.id,
+#             receiver_id=friend_id,
+#             text=text,
+#             timestamp=datetime.now()
+#         )
+#         db_sess.add(new_message)
+#         db_sess.commit()
+#         print(4)
+#         return jsonify({"success": True, "message": "Сообщение отправлено."}), 200
+#
+#     except Exception as e:
+#         print("Error", e)
+#         return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route("/messages/<int:friend_id>", methods=["GET"])
+@login_required
+def messages(friend_id):
+    db_sess = db_session.create_session()
+    try:
+        # Получаем список всех друзей текущего пользователя
+        friends = db_sess.query(Friend).filter(
+            Friend.user_id == current_user.id,
+            Friend.stat == 1  # Только друзья
+        ).all()
+
+        # Генерация списка chat_data
+        chat_data = [
+            {
+                "friend_id": friend.friend_id,
+                "name": friend.friend.name,
+                "avatar": str(friend.friend.avatar.image_data).replace("b'", "").replace("'", ""),
+                "last_message": get_last_message_text(db_sess, friend.friend_id, friend.id),
+            }
+            for friend in friends
+        ]
+
+        # Если friend_id == 0, не показываем чат
+        if friend_id == 0:
+            return render_template("messages.html", chats=chat_data, selected_chat=None)
+
+        # Иначе получаем выбранный чат
+        selected_chat = next((chat for chat in chat_data if chat["friend_id"] == friend_id), None)
+        if not selected_chat:
+            return render_template("messages.html", chats=chat_data, selected_chat=None)
+
+        # Получаем сообщения для выбранного чата
+        messages = db_sess.query(Message).filter(
+            ((Message.sender_id == current_user.id) & (Message.receiver_id == friend_id)) |
+            ((Message.sender_id == friend_id) & (Message.receiver_id == current_user.id))
+        ).order_by(Message.timestamp.asc()).all()
+
+        message_data = [
+            {
+                "text": msg.text,
+                "is_sent": msg.sender_id == current_user.id,
+                "time": msg.timestamp.strftime("%H:%M"),
+                "sent": current_user.id,
+            }
+            for msg in messages
+        ]
+
+        return render_template("messages.html", chats=chat_data, selected_chat=selected_chat, messages=message_data,
+                               friend_id=friend_id)
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return render_template("messages.html", chats=[], selected_chat=None, messages=[])
+    finally:
+        db_sess.close()
+
+
+@app.route("/get_new_messages/<int:friend_id>", methods=["GET"])
+@login_required
+def get_new_messages(friend_id):
+    db_sess = db_session.create_session()
+    try:
+        last_message_id = int(request.args.get("last_message_id", 0))
+
+        # Получаем новые сообщения для выбранного чата
+        new_messages = db_sess.query(Message).filter(
+            ((Message.sender_id == current_user.id) & (Message.receiver_id == friend_id)) |
+            ((Message.sender_id == friend_id) & (Message.receiver_id == current_user.id)),
+            Message.id > last_message_id
+        ).order_by(Message.timestamp.asc()).all()
+
+        # Формируем JSON-ответ
+        message_data = [
+            {
+                "id": msg.id,
+                "text": msg.text,
+                "is_sent": msg.sender_id == current_user.id,
+                "time": msg.timestamp.strftime("%H:%M"),
+            }
+            for msg in new_messages
+        ]
+
+        return jsonify(message_data)
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return jsonify([]), 500
+    finally:
+        db_sess.close()
+
+
+@app.route("/send_message", methods=["POST"])
+@login_required
+def send_message():
+    db_sess = db_session.create_session()
+    try:
+        data = request.json
+        text = data.get("text")
+        receiver_id = data.get("receiver_id")
+
+        if not text or not receiver_id:
+            return jsonify({"status": "error", "message": "Недостаточно данных"}), 400
+
+        # Создаем новое сообщение
+        new_message = Message(
+            text=text,
+            sender_id=current_user.id,
+            receiver_id=receiver_id,
+            timestamp=datetime.utcnow()
+        )
+        db_sess.add(new_message)
+        db_sess.commit()
+
+        return jsonify({"status": "success", "message": "Сообщение отправлено"})
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return jsonify({"status": "error", "message": "Ошибка сервера"}), 500
+    finally:
+        db_sess.close()
 
 
 if __name__ == '__main__':

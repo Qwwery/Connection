@@ -5,20 +5,79 @@
 {% endblock %}
 
 {% block content %}
-<h1>Заявки в друзья</h1>
+<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/requests.css')}}"/>
 
-{% if incoming_requests %}
-    <ul>
+<section class="friend-requests">
+    <h1 class="friend-requests__title">Заявки в друзья</h1>
+
+    {% if incoming_requests %}
+    <ul class="friend-requests__list">
         {% for request in incoming_requests %}
-            <li>
-                {{ request.sender_name }}
-                <a href="prof/{{ request.special_login }}">Просмотреть профиль</a>
-                <button class="accept-btn" data-id="{{ request.id }}">Принять</button>
-                <button class="reject-btn" data-id="{{ request.id }}">Отклонить</button>
-            </li>
+        <li class="friend-requests__item">
+            <a href="/prof/{{request.special_login}}" class="profile-pic-container">
+                <img class="profile-pic" src="data:image/jpg;base64,{{ request.ava }}" alt="Профильное фото">
+            </a>
+            <div class="friend-requests__user-info">
+                <span class="friend-requests__username">{{ request.sender_name }}</span>
+                <a href="prof/{{ request.special_login }}" class="friend-requests__profile-link">Просмотреть профиль</a>
+            </div>
+            <div class="friend-requests__actions">
+                <button class="accept-btn" data-user-id="{{ request.friend_id }}">Принять</button>
+                <button class="reject-btn" data-user-id="{{ request.friend_id }}">Отклонить</button>
+            </div>
+        </li>
         {% endfor %}
     </ul>
-{% else %}
-    <p>Нет входящих заявок.</p>
-{% endif %}
+    {% else %}
+    <p class="friend-requests__empty-message">Нет входящих заявок.</p>
+    {% endif %}
+</section>
+
+<script>
+
+    $('.accept-btn').on('click', function () {
+        const userId = $(this).data('user-id');
+        const buttonElement = $(this);
+        $.ajax({
+            url: '/accept-friend-request',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({friend_id: userId}),  // Передаем user_id как friend_id
+            success: function (response) {
+                if (response.success) {
+                    buttonElement.replaceWith(`<a href="/messages/${userId}" class="message-btn">Перейти к личным сообщениям</a>`);
+                    alert(response.message);
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert(userId);
+            }
+        });
+    });
+
+    $('.reject-btn').on('click', function () {
+        const userId = $(this).data('user-id');
+        const buttonElement = $(this);
+        $.ajax({
+            url: '/reject-friend-request',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({friend_id: userId}),  // Передаем user_id как friend_id
+            success: function (response) {
+                if (response.success) {
+                    buttonElement.closest('.friend-requests__item').remove();
+                    alert(response.message);
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert("Произошла ошибка при отклонении заявки.");
+            }
+        });
+    });
+</script>
+
 {% endblock %}

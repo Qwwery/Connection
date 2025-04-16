@@ -1,0 +1,70 @@
+.friend-requests {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.friend-requests__title {
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.friend-requests__list {
+    list-style: none;
+    padding: 0;
+}
+
+.friend-requests__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.friend-requests__user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.friend-requests__username {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.friend-requests__profile-link {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.friend-requests__profile-link:hover {
+    text-decoration: underline;
+}
+
+.friend-requests__actions {
+    display: flex;
+    gap: 10px;
+}
+
+.friend-requests__action-btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.accept-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.reject-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.friend-requests__empty-message {
+    text-align: center;
+    color: #6c757d;
+}

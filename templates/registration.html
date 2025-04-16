@@ -9,15 +9,15 @@ Connection | Регистрация
 <form id='registration' name="registration">
     <div class="only_registration">
         <h3>Регистрация</h3>
-        <input type="text" placeholder="Имя" name="name" id="name">
-        <input type="text" placeholder="Фамилия" name="lastName" id="lastName">
-        <input type="text" placeholder="Логин" value="{{ info.login }}" name="login" id="login">
+        <input type="text" placeholder="Имя" name="name" id="name" maxlength="15">
+        <input type="text" placeholder="Фамилия" name="lastName" id="lastName" maxlength="15">
+        <input type="text" placeholder="Логин" value="{{ info.login }}" name="login" id="login" maxlength="10">
         <div id="check_login" style="color: red"></div>
         <input type="text" placeholder="Почта" name="email" value="{{ info.email }}" id="email">
         <div id="params" style="color: red"></div>
-        <input type="password" placeholder="Пароль" name="password" value="{{ info.password }}" id="password">
+        <input type="password" placeholder="Пароль" name="password" value="{{ info.password }}" id="password" maxlength="30">
         <button value="registration" name="button" type="submit">Создать</button>
-        <div>Нажимая кнопу «Создать», вы соглашаетесь с <b><a href="user_agreement" class="user_agreement">Пользовательским
+        <div style="color: #333333">Нажимая кнопу «Создать», вы соглашаетесь с <b><a href="user_agreement" class="user_agreement">Пользовательским
             соглашением</a></b> и <b><a href="privacy" class="privacy">политикой конфиденциальности</a></b>.
         </div>
     </div>

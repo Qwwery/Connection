@@ -1,1 +1,141 @@
-Ну мессенджер
+{% extends "base.html" %}
+
+{% block title %}
+Мессенджер
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/messages.css') }}"/>
+
+<div class="messenger-container">
+    <!-- Левая панель: список чатов -->
+    <div class="chat-list">
+        <h2>Сообщения</h2>
+        <ul class="chat-items">
+            {% for chat in chats %}
+            <li class="chat-item" data-chat-id="{{ chat.friend_id }}">
+                <a href="/messages/{{ chat.friend_id }}" class="chat-link">
+                    <img class="chat-avatar" src="data:image/jpg;base64,{{ chat.avatar }}" alt="Аватар друга">
+                    <div class="chat-info">
+                        <span class="chat-name">{{ chat.name }}</span>
+                        <span class="chat-last-message">{{ chat.last_message }}</span>
+                    </div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Правая панель: мессенджер -->
+    <div class="chat-area">
+        {% if not selected_chat %}
+        <div class="no-chat-selected">
+            <p>Выберите чат для начала общения.</p>
+        </div>
+        {% else %}
+        <div class="chat-header">
+            <img class="chat-avatar-large" src="data:image/jpg;base64,{{ selected_chat.avatar }}" alt="Аватар друга">
+            <span class="chat-username">{{ selected_chat.name }}</span>
+        </div>
+
+        <div class="chat-messages">
+            {% for message in messages %}
+            <div class="message {{ 'sent' if message.is_sent else 'received' }}">
+                <p>{{ message.text }}</p>
+                <span class="message-time">{{ message.time }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <form id="messageForm">
+            <div class="chat-input">
+                <textarea id="messageInput" name="message" placeholder="Введите сообщение..."
+                          class="message-input"></textarea>
+                <button type="submit" id="sendMessageButton" class="send-button">Отправить</button>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    document.getElementById('messageInput').addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            if (!event.shiftKey) {
+                // Если нажат только Enter (без Shift), отправляем сообщение
+                event.preventDefault(); // Предотвращаем создание новой строки
+                document.getElementById('messageForm').dispatchEvent(new Event('submit')); // Имитируем отправку формы
+            }
+            // Если нажат Shift + Enter, ничего не делаем (перенос строки происходит автоматически)
+        }
+    });
+
+    let lastMessageId = 0; // Идентификатор последнего полученного сообщения
+    let currentFriendId = parseInt('{{ friend_id }}'); // ID текущего друга (передается из шаблона)
+
+    // Функция для отправки AJAX-запроса за новыми сообщениями
+    function fetchNewMessages() {
+        if (currentFriendId === 0) return; // Если чат не выбран, выходим
+
+        fetch(`/get_new_messages/${currentFriendId}?last_message_id=${lastMessageId}`)
+            .then(response => response.json())
+            .then(newMessages => {
+                if (newMessages.length > 0) {
+                    newMessages.forEach(msg => {
+                        addMessageToChat(msg);
+                        lastMessageId = msg.id; // Обновляем последний ID
+                    });
+                    scrollToBottom(); // Прокручиваем вниз
+                }
+            })
+            .catch(error => console.error('Ошибка при получении сообщений:', error));
+    }
+
+    // Функция для добавления сообщения в интерфейс
+    function addMessageToChat(message) {
+        const chatMessages = document.querySelector('.chat-messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${message.is_sent ? 'sent' : 'received'}`;
+        messageDiv.innerHTML = `
+        <p>${message.text}</p>
+        <span class="message-time">${message.time}</span>
+    `;
+        chatMessages.appendChild(messageDiv);
+    }
+
+    // Функция для прокрутки чата вниз
+    function scrollToBottom() {
+        const chatMessages = document.querySelector('.chat-messages');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Периодическое обновление каждые 2 секунды
+    setInterval(fetchNewMessages, 2000);
+
+    // Отправка нового сообщения
+    document.getElementById('messageForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const messageInput = document.getElementById('messageInput');
+        const messageText = messageInput.value.trim();
+
+        if (messageText !== '') {
+            fetch('/send_message', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    text: messageText,
+                    receiver_id: currentFriendId
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        messageInput.value = ''; // Очищаем поле ввода
+                    }
+                })
+                .catch(error => console.error('Ошибка при отправке сообщения:', error));
+        }
+    });
+</script>
+{% endblock %}

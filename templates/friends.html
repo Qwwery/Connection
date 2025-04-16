@@ -6,16 +6,70 @@
 
 {% block content %}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/home.css') }}" />
-<div class="profile-container">
+
+<div class="friends-container">
+    <h1 align="center" style="color: white">Мои друзья</h1>
+
     {% if error %}
-    <h2>Упс, произошла какая-то ошибка!</h2>
-    {% endif %}
-    {% if friends %}
-        {% for friend in friends %}
-            <a href="prof/{{ friend.friend_id }}">{{ friend.name_friends }}</a><br>
-        {% endfor %}
+        <div class="error-message">
+            <h2>Упс, произошла какая-то ошибка!</h2>
+        </div>
+    {% elif friends %}
+        <ul class="friends-list">
+            {% for friend in friends %}
+                <li class="friend-item">
+                    <a href="/prof/{{ friend.friend_id }}" class="profile-pic-container">
+                        <img class="profile-pic" src="data:image/jpg;base64,{{ friend.user.avatar.image_data }}" alt="Аватар друга">
+                    </a>
+                    <div class="friend-info">
+                        <a href="/prof/{{ friend.friend_id }}" class="friend-name" style="color: black">{{ friend.name_friends }}</a>
+                        <div class="friend-actions">
+                            <a href="/messages/{{ friend.friend_id }}" class="message-btn">Написать сообщение</a>
+                            <button class="remove-friend-btn" data-id="{{ friend.friend_id }}">Удалить из друзей</button>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
     {% else %}
-        <p>У вас пока нет друзей.</p>
+        <div class="no-friends-message">
+            <p>У вас пока нет друзей.</p>
+        </div>
     {% endif %}
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Обработчик для кнопки "Удалить из друзей"
+        const removeButtons = document.querySelectorAll('.remove-friend-btn');
+        removeButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const friendId = this.dataset.id;
+
+                if (confirm('Вы уверены, что хотите удалить этого друга?')) {
+                    fetch('/remove-friend', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ friend_id: friendId }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Друг успешно удален.');
+                            location.reload(); // Перезагрузка страницы
+                        } else {
+                            alert(data.message || 'Произошла ошибка.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка:', error);
+                        alert('Произошла ошибка при удалении друга.');
+                    });
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

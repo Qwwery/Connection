@@ -14,35 +14,154 @@
 
 <div id="searchResults"></div>
 
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+    // Функция для добавления в друзья
+    function addFriend(friendId, buttonElement) {
+        $.ajax({
+            url: '/send-friend-request',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ friend_id: friendId }),
+            success: function (response) {
+                if (response.success) {
+                    // Обновляем текст и класс кнопки
+                    buttonElement.text("Заявка отправлена");
+                    buttonElement.removeClass("add-friend-btn").addClass("pending-btn");
+                    buttonElement.off('click'); // Удаляем старый обработчик
+                    buttonElement.on('click', function () {
+                        cancelFriendRequest(friendId, buttonElement); // Новый обработчик для отмены заявки
+                    });
+                    alert(response.message);
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert("Произошла ошибка при отправке заявки.");
+            }
+        });
+    }
+
+    // Функция для отмены заявки
+    function cancelFriendRequest(friendId, buttonElement) {
+        $.ajax({
+            url: '/pending-friend',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ friend_id: friendId }),
+            success: function (response) {
+                if (response.success) {
+                    // Обновляем текст и класс кнопки
+                    buttonElement.text("Добавить в друзья");
+                    buttonElement.removeClass("pending-btn").addClass("add-friend-btn");
+                    buttonElement.off('click'); // Удаляем старый обработчик
+                    buttonElement.on('click', function () {
+                        addFriend(friendId, buttonElement); // Новый обработчик для добавления в друзья
+                    });
+                    alert(response.message);
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert("Произошла ошибка при отмене заявки.");
+            }
+        });
+    }
+
+    // Функция для принятия заявки
+    function acceptFriendRequest(friendId, buttonElement) {
+        $.ajax({
+            url: '/accept-friend-request',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ friend_id: friendId }),
+            success: function (response) {
+                if (response.success) {
+                    // Обновляем текст и класс кнопки
+                    buttonElement.replaceWith(`<a href="/messages/${friendId}" class="message-btn">Перейти к личным сообщениям</a>`);
+                    alert(response.message);
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert("Произошла ошибка при принятии заявки.");
+            }
+        });
+    }
+
+    // Функция для обновления результатов поиска
+    function updateSearchResults(users) {
+        const resultsDiv = $('#searchResults');
+        resultsDiv.empty();
+
+        if (users.length > 0) {
+            users.forEach(user => {
+                let buttonHtml = '';
+
+                if (user.friend_status === "not_friends") {
+                    buttonHtml = `<button class="add-friend-btn" data-id="${user.id}">Добавить в друзья</button>`;
+                } else if (user.friend_status === "friends") {
+                    buttonHtml = `<a href="/messages/${user.id}" class="message-btn">Перейти к личным сообщениям</a>`;
+                } else if (user.friend_status === "request_sent") {
+                    buttonHtml = `<button class="pending-btn" data-id="${user.id}">Заявка отправлена</button>`;
+                } else if (user.friend_status === "request_received") {
+                    buttonHtml = `<button class="accept-friend-btn" data-id="${user.id}">Принять заявку</button>`;
+                }
+
+                resultsDiv.append(`
+                    <div class="user">
+                        <a href="/prof/${user.id}" class="profile-pic-container">
+                            <img class="profile-pic" src="data:image/jpg;base64,${user.ava}" alt="Профильное фото">
+                        </a>
+                        <div class="user-info">
+                            <span><h3>${user.name} ${user.last_name}</h3></span>
+                            <a href="/prof/${user.id}" class="view-profile-btn">Просмотреть профиль</a>
+                            ${buttonHtml}
+                        </div>
+                    </div>`
+                );
+            });
+
+            // Добавляем обработчики для кнопок
+            $('.add-friend-btn').on('click', function () {
+                const friendId = $(this).data('id');
+                addFriend(friendId, $(this));
+            });
+
+            $('.pending-btn').on('click', function () {
+                const friendId = $(this).data('id');
+                cancelFriendRequest(friendId, $(this));
+            });
+
+            $('.accept-friend-btn').on('click', function () {
+                const friendId = $(this).data('id');
+                acceptFriendRequest(friendId, $(this));
+            });
+        } else {
+            resultsDiv.append('<p>Ничего не найдено.</p>');
+        }
+    }
+
+    // Основной скрипт
     $(document).ready(function () {
+        // Обработка отправки формы поиска
         $('#searchForm').on('submit', function (event) {
             event.preventDefault();
-
             const query = $('#searchQuery').val();
-
             $.ajax({
                 url: '/search',
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({ query: query }),
                 success: function (response) {
-                    const resultsDiv = $('#searchResults');
-                    resultsDiv.empty();
-
                     if (response.success && response.users.length > 0) {
-                        response.users.forEach(user => {
-                            resultsDiv.append(`
-                                <div class="user">
-                                    <span>${user.name} ${user.last_name}</span>
-                                    <a href="prof/${ user.special_login }">Просмотреть профиль</a>
-                                    <button class="add-friend-btn" data-id="${user.id}">Добавить в друзья</button>
-                                </div>
-                            `);
-                        });
+                        updateSearchResults(response.users);
                     } else {
-                        resultsDiv.append('<p>Ничего не найдено.</p>');
+                        $('#searchResults').append('<p>Ничего не найдено.</p>');
                     }
                 },
                 error: function () {

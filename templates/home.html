@@ -9,10 +9,10 @@
             <ul class="main_nav_ul">
                 <li><a href="/feed">Главная</a></li>
                 <li><a href="/home">Профиль</a></li>
-                <li><a href="/news">Новости</a></li>
-                <li><a href="/messages">Сообщения</a></li>
+                <li><a href="/messages/0">Сообщения</a></li>
                 <li><a href="/friends">Друзья</a></li>
-                <li><a href="/settings">Настройки</a></li>
+                <li><a href="/friend-requests">Заявки в друзья</a></li>
+                <li><a href="/search">Поиск людей</a></li>
             </ul>
         </nav>
     </aside>
@@ -51,29 +51,27 @@
                 <h2>Недавние публикации</h2>
                 <button id="addPostButton" class="add-post-button">+</button>
             </div>
-            <div class="post-container">
-                {% if news_list %}
-                {% for news in news_list %}
-                <div class="post" data-id="{{ news.id }}">
-                    <h3>{{ news.title }}</h3>
-                    <p>{{ news.content }}</p>
-                    {% if news.image %}
-                    <img src="{{ news.image }}" alt="Изображение новости" class="post-image">
-                    {% endif %}
-                    <span class="post-date">{{ news.created_at }}</span>
-                    <div class="dropdown">
-                        <button class="dropdown-button">...</button>
-                        <div class="dropdown-content">
-                            <a href="#" class="edit-news" data-id="{{ news.id }}">Редактировать</a>
-                            <a href="#" class="delete-news" data-id="{{ news.id }}">Удалить</a>
-                        </div>
+            {% if news_list %}
+            {% for news in news_list %}
+            <div class="post" data-id="{{ news.id }}">
+                <h3>{{ news.title }}</h3>
+                <p>{{ news.content }}</p>
+                {% if news.image %}
+                <img src="{{ news.image }}" alt="Изображение новости" class="post-image">
+                {% endif %}
+                <span class="post-date">{{ news.created_at }}</span>
+                <div class="dropdown">
+                    <button class="dropdown-button">...</button>
+                    <div class="dropdown-content">
+                        <a href="#" class="edit-news" data-id="{{ news.id }}">Редактировать</a>
+                        <a href="#" class="delete-news" data-id="{{ news.id }}">Удалить</a>
                     </div>
                 </div>
-                {% endfor %}
-                {% else %}
-                <p id="netnowostey">Нет новостей.</p>
-                {% endif %}
             </div>
+            {% endfor %}
+            {% else %}
+            <p id="netnowostey">Нет новостей.</p>
+            {% endif %}
         </div>
     </div>
 </div>

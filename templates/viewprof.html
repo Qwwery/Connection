@@ -1,12 +1,31 @@
-{% extends "base.html" %}
-
-{% block title %}
-{{ name }} {{ last_name }}
-{% endblock %}
-
-{% block content %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <aside class="left-panel">
+        <div class="logo">
+            <a href="/" class="logo_a">Connection</a>
+        </div>
+        <nav class="main-nav">
+            <ul class="main_nav_ul">
+                <li><a href="/feed">Главная</a></li>
+                <li><a href="/home">Профиль</a></li>
+                <li><a href="/messages/0">Сообщения</a></li>
+                <li><a href="/friends">Друзья</a></li>
+                <li><a href="/friend-requests">Заявки в друзья</a></li>
+                <li><a href="/search">Поиск людей</a></li>
+            </ul>
+        </nav>
+    </aside>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/home.css')}}"/>
+    <link rel="icon" href="{{url_for('static', filename='image/AC_icon.png')}}">
+    <title>{{ name }} {{ last_name }}</title>
+</head>
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/home.css') }}"/>
-
+<body>
 <div class="profile-container">
     <form id="AddF" onsubmit="">
         <div class="profile-left">
@@ -26,53 +45,59 @@
         </section>
         <section class="profile-info">
             <ul>
-                <li><strong>Интересы:</strong> <span id="interests_info">{% if not hide_interests %}{{ interests }}{% else %}Пользователь скрыл данные{% endif %}</span></li>
-                <li><strong>Дата рождения:</strong> <span id="birthday_info">{% if not hide_birthday %}{{ birthday }}{% else %}Пользователь скрыл данные{% endif %}</span></li>
-                <li><strong>Город:</strong> <span id="city_info">{% if not hide_city %}{{ city }}{% else %}Пользователь скрыл данные{% endif %}</span></li>
+                <li><strong>Интересы:</strong> <span id="interests_info">{% if not hide_interests %}{{ interests }}{% else %}Пользователь скрыл данные{% endif %}</span>
+                </li>
+                <li><strong>Дата рождения:</strong> <span id="birthday_info">{% if not hide_birthday %}{{ birthday }}{% else %}Пользователь скрыл данные{% endif %}</span>
+                </li>
+                <li><strong>Город:</strong> <span id="city_info">{% if not hide_city %}{{ city }}{% else %}Пользователь скрыл данные{% endif %}</span>
+                </li>
             </ul>
         </section>
-        <section class="profile-posts">
+        <div class="profile-posts">
             <div class="posts-header">
-                <h2>Недавние публикации</h2>
-                <button id="addPostButton" class="add-post-button">+</button> <!-- хуйняяяяяяяяя -->
+                <h2>Недавние публикации</h2> <!-- хуйняяяяяяяяя -->
             </div>
-            <div class="post">
-                <h3>Заголовок публикации</h3>
-                <p>Текст публикации...</p>
-                <span class="post-date">1 Января 2025</span>
+            {% if news_list %}
+            {% for news in news_list %}
+            <div class="post" data-id="{{ news.id }}">
+                <h3>{{ news.title }}</h3>
+                <p>{{ news.content }}</p>
+                {% if news.image %}
+                <img src="{{ news.image }}" alt="Изображение новости" class="post-image">
+                {% endif %}
+                <span class="post-date">{{ news.created_at }}</span>
             </div>
-            <div class="post">
-                <h3>Другой заголовок</h3>
-                <p>Другой текст публикации...</p>
-                <span class="post-date">31 Декабря 2024</span>
-            </div>
+            {% endfor %}
+            {% else %}
+            <p id="netnowostey">Нет новостей.</p>
+            {% endif %}
+        </div>
+    </div>
+
+
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <span id="addClose" class="close">&times;</span>
+            <form id="addNewsForm">
+                <h2>Добавление новости</h2>
+                <div class="form-group">
+                    <label for="title">Заголовок новости</label>
+                    <div class="input-with-buttons">
+                        <input type="text" id="title" name="title" class="form-input" placeholder="Введите заголовок">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="textNews">Текст новости</label>
+                    <div class="input-with-buttons">
+                    <textarea id="textNews" name="textNews" class="form-input form-textarea" placeholder="Введите текст"
+                              maxlength="512"></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="save-button">Добавить новость</button>
+            </form>
         </div>
     </div>
 </div>
-
-
-<div id="addModal" class="modal">
-    <div class="modal-content">
-        <span id="addClose" class="close">&times;</span>
-        <form id="addNewsForm">
-            <h2>Добавление новости</h2>
-            <div class="form-group">
-                <label for="title">Заголовок новости</label>
-                <div class="input-with-buttons">
-                    <input type="text" id="title" name="title" class="form-input" placeholder="Введите заголовок">
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="textNews">Текст новости</label>
-                <div class="input-with-buttons">
-                    <textarea id="textNews" name="textNews" class="form-input form-textarea" placeholder="Введите текст" maxlength="512"></textarea>
-                </div>
-            </div>
-            <button type="submit" class="save-button">Добавить новость</button>
-        </form>
-    </div>
-</div>
-
 
 <!-- Модальное окно -->
 <div id="editModal" class="modal">
@@ -85,8 +110,12 @@
                 <div class="input-with-buttons">
                     <input type="text" id="interests" name="interests" value="{{ interests }}" class="form-input">
                     <div class="toggle-buttons">
-                        <button id="showInt" class="toggle-button" style="display: {% if not hide_interests %}none{% endif %};">Показывать</button>
-                        <button id="hideInt" class="toggle-button" style="display: {% if hide_interests %}none{% endif %};">Скрывать</button>
+                        <button id="showInt" class="toggle-button"
+                                style="display: {% if not hide_interests %}none{% endif %};">Показывать
+                        </button>
+                        <button id="hideInt" class="toggle-button"
+                                style="display: {% if hide_interests %}none{% endif %};">Скрывать
+                        </button>
                     </div>
                 </div>
             </div>
@@ -95,8 +124,12 @@
                 <div class="input-with-buttons">
                     <input type="text" id="birthday" name="birthday" value="{{ birthday }}" class="form-input">
                     <div class="toggle-buttons">
-                        <button id="showBir" class="toggle-button" style="display: {% if not hide_birthday %}none{% endif %};">Показывать</button>
-                        <button id="hideBir" class="toggle-button" style="display: {% if hide_birthday %}none{% endif %};">Скрывать</button>
+                        <button id="showBir" class="toggle-button"
+                                style="display: {% if not hide_birthday %}none{% endif %};">Показывать
+                        </button>
+                        <button id="hideBir" class="toggle-button"
+                                style="display: {% if hide_birthday %}none{% endif %};">Скрывать
+                        </button>
                     </div>
                 </div>
             </div>
@@ -105,8 +138,13 @@
                 <div class="input-with-buttons">
                     <input type="text" id="city" name="city" value="{{ city }}" class="form-input">
                     <div class="toggle-buttons">
-                        <button id="showCit" class="toggle-button" style="display: {% if not hide_city %}none{% endif %};">Показывать</button>
-                        <button id="hideCit" class="toggle-button" style="display: {% if hide_city %}none{% endif %};">Скрывать</button>
+                        <button id="showCit" class="toggle-button"
+                                style="display: {% if not hide_city %}none{% endif %};">Показывать
+                        </button>
+                        <button id="hideCit" class="toggle-button"
+                                style="display: {% if hide_city %}none{% endif %};">
+                            Скрывать
+                        </button>
                     </div>
                 </div>
             </div>
@@ -118,122 +156,130 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-$(document).ready(function () {
-    let userId = "{{ user_id }}"; // ID пользователя, чей профиль открыт
-    let currentCheckStatus = {{ check }}; // Текущий статус дружбы (-1, 0, 1 или 2)
-    console.log("Check status:", {{ check }});
-    // Функция для обновления кнопки
-    function updateFriendRequestButton(checkStatus) {
-        const buttonContainer = $('#friendRequestButtonContainer');
-        buttonContainer.empty(); // Очищаем контейнер
+    $(document).ready(function () {
+        let userId = "{{ user_id }}"; // ID пользователя, чей профиль открыт
+        let currentCheckStatus = {{ check }}; // Текущий статус дружбы (-1, 0, 1 или 2)
+        console.log("Check status:", {{ check }});
 
-        if (checkStatus === -1) {
-            // Состояние: не друзья, можно отправить заявку
-            buttonContainer.append(
-                `<button class="edit-button" type="button" id="sendFriendRequest">Отправить заявку</button>`
-            );
-            $('#sendFriendRequest').on('click', handleSendFriendRequest);
-        } else if (checkStatus === 0) {
-            // Состояние: заявка отправлена, можно отменить
-            buttonContainer.append(
-                `<button class="edit-button" type="button" id="resendFriendRequest">Отменить заявку</button>`
-            );
-            $('#resendFriendRequest').on('click', handleCancelFriendRequest);
-        } else if (checkStatus === 1) {
-            // Состояние: уже друзья, можно перейти к личным сообщениям
-            buttonContainer.append(
-                `<button class="edit-button" type="button" id="goFriendMessage">Перейти к личным сообщениям</button>`
-            );
-            $('#goFriendMessage').on('click', handleGoToMessages);
-        } else if (checkStatus === 2) {
-            // Состояние: получена заявка, можно принять
-            buttonContainer.append(
-                `<button class="edit-button" type="button" id="acceptFriendRequest">Принять заявку</button>`
-            );
-            $('#acceptFriendRequest').on('click', handleAcceptFriendRequest);
+        var hasNews = $('.post-container .post').length > 0;
+        if (!hasNews) {
+            $('#netnowostey').show(); // Показываем сообщение "Нет новостей"
+        } else {
+            $('#netnowostey').hide(); // Скрываем сообщение, если новости есть
         }
-    }
 
-    // Обработчик для отправки заявки
-    function handleSendFriendRequest(event) {
-        event.preventDefault();
+        // Функция для обновления кнопки
+        function updateFriendRequestButton(checkStatus) {
+            const buttonContainer = $('#friendRequestButtonContainer');
+            buttonContainer.empty(); // Очищаем контейнер
 
-        $.ajax({
-            url: '/send-friend-request',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ friend_id: userId }),
-            success: function (response) {
-                if (response.success) {
-                    alert("Заявка в друзья отправлена!");
-                    currentCheckStatus = 0; // Меняем статус на "заявка отправлена"
-                    updateFriendRequestButton(currentCheckStatus); // Обновляем кнопку
-                } else {
-                    alert("Ошибка: " + response.message);
-                }
-            },
-            error: function () {
-                alert("Произошла ошибка при отправке запроса.");
+            if (checkStatus === -1) {
+                // Состояние: не друзья, можно отправить заявку
+                buttonContainer.append(
+                    `<button class="edit-button" type="button" id="sendFriendRequest">Отправить заявку</button>`
+                );
+                $('#sendFriendRequest').on('click', handleSendFriendRequest);
+            } else if (checkStatus === 0) {
+                // Состояние: заявка отправлена, можно отменить
+                buttonContainer.append(
+                    `<button class="edit-button" type="button" id="resendFriendRequest">Отменить заявку</button>`
+                );
+                $('#resendFriendRequest').on('click', handleCancelFriendRequest);
+            } else if (checkStatus === 1) {
+                // Состояние: уже друзья, можно перейти к личным сообщениям
+                buttonContainer.append(
+                    `<button class="edit-button" type="button" id="goFriendMessage">Перейти к личным сообщениям</button>`
+                );
+                $('#goFriendMessage').on('click', handleGoToMessages);
+            } else if (checkStatus === 2) {
+                // Состояние: получена заявка, можно принять
+                buttonContainer.append(
+                    `<button class="edit-button" type="button" id="acceptFriendRequest">Принять заявку</button>`
+                );
+                $('#acceptFriendRequest').on('click', handleAcceptFriendRequest);
             }
-        });
-    }
+        }
 
-    // Обработчик для отмены заявки
-    function handleCancelFriendRequest(event) {
-        event.preventDefault();
+        // Обработчик для отправки заявки
+        function handleSendFriendRequest(event) {
+            event.preventDefault();
 
-        $.ajax({
-            url: '/cancel-friend-request',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ friend_id: userId }),
-            success: function (response) {
-                if (response.success) {
-                    alert("Заявка успешно отменена!");
-                    currentCheckStatus = -1; // Меняем статус на "не друзья"
-                    updateFriendRequestButton(currentCheckStatus); // Обновляем кнопку
-                } else {
-                    alert("Ошибка: " + response.message);
+            $.ajax({
+                url: '/send-friend-request',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({friend_id: userId}),
+                success: function (response) {
+                    if (response.success) {
+                        alert("Заявка в друзья отправлена!");
+                        currentCheckStatus = 0; // Меняем статус на "заявка отправлена"
+                        updateFriendRequestButton(currentCheckStatus); // Обновляем кнопку
+                    } else {
+                        alert("Ошибка: " + response.message);
+                    }
+                },
+                error: function () {
+                    alert("Произошла ошибка при отправке запроса.");
                 }
-            },
-            error: function () {
-                alert("Произошла ошибка при отмене заявки.");
-            }
-        });
-    }
+            });
+        }
 
-    // Обработчик для принятия заявки
-    function handleAcceptFriendRequest(event) {
-        event.preventDefault();
+        // Обработчик для отмены заявки
+        function handleCancelFriendRequest(event) {
+            event.preventDefault();
 
-        $.ajax({
-            url: '/accept-friend-request',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ friend_id: userId }),
-            success: function (response) {
-                if (response.success) {
-                    alert("Заявка успешно принята!");
-                    currentCheckStatus = 1; // Меняем статус на "уже друзья"
-                    updateFriendRequestButton(currentCheckStatus); // Обновляем кнопку
-                } else {
-                    alert("Ошибка: " + response.message);
+            $.ajax({
+                url: '/cancel-friend-request',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({friend_id: userId}),
+                success: function (response) {
+                    if (response.success) {
+                        alert("Заявка успешно отменена!");
+                        currentCheckStatus = -1; // Меняем статус на "не друзья"
+                        updateFriendRequestButton(currentCheckStatus); // Обновляем кнопку
+                    } else {
+                        alert("Ошибка: " + response.message);
+                    }
+                },
+                error: function () {
+                    alert("Произошла ошибка при отмене заявки.");
                 }
-            },
-            error: function () {
-                alert("Произошла ошибка при принятии заявки.");
-            }
-        });
-    }
+            });
+        }
 
-    // Обработчик для перехода к личным сообщениям
-    function handleGoToMessages(event) {
-        event.preventDefault();
-        window.location.href = `/messages/${userId}`;
-    }
+        // Обработчик для принятия заявки
+        function handleAcceptFriendRequest(event) {
+            event.preventDefault();
 
-    // Инициализация кнопки при загрузке страницы
-    updateFriendRequestButton(currentCheckStatus);
+            $.ajax({
+                url: '/accept-friend-request',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({friend_id: userId}),
+                success: function (response) {
+                    if (response.success) {
+                        alert("Заявка успешно принята!");
+                        currentCheckStatus = 1; // Меняем статус на "уже друзья"
+                        updateFriendRequestButton(currentCheckStatus); // Обновляем кнопку
+                    } else {
+                        alert("Ошибка: " + response.message);
+                    }
+                },
+                error: function () {
+                    alert("Произошла ошибка при принятии заявки.");
+                }
+            });
+        }
+
+        // Обработчик для перехода к личным сообщениям
+        function handleGoToMessages(event) {
+            event.preventDefault();
+            window.location.href = `/messages/${userId}`;
+        }
+
+        // Инициализация кнопки при загрузке страницы
+        updateFriendRequestButton(currentCheckStatus);
 
 
         // инициализация переменных
@@ -353,6 +399,7 @@ $(document).ready(function () {
             });
             modal.hide();
         });
-});
+    });
 </script>
-{% endblock %}
+</body>
+
